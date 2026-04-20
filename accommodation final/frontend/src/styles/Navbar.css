@@ -1,0 +1,54 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 60px;
+  background: #e8dfd6;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-size: 24px;
+  font-family: Georgia, serif;
+  color: #2c5f6d;
+  cursor: pointer;
+  margin: 0;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 30px;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links li {
+  cursor: pointer;
+  color: #333;
+  font-size: 15px;
+}
+
+.nav-links li:hover {
+  color: #2c5f6d;
+}
+
+.nav-links .active {
+  color: #2c5f6d;
+  font-weight: bold;
+}
+
+.nav-icons {
+  display: flex;
+  gap: 15px;
+  font-size: 18px;
+  align-items: center;
+  cursor: pointer;
+  color: #333;
+}
+
+.nav-icons svg:hover {
+  color: #2c5f6d;
+}
