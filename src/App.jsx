@@ -8,6 +8,7 @@ import Contact from './Contact';
 import Login from './Login';
 import ForgotPassword from './ForgotPassword';
 import Signup from './Signup';
+import Profile from "./Profile";
 import AboutUs from "./AboutUs";
 import Gallery from "./Gallery";
 import Accommodation from "./Accommodation";
@@ -34,7 +35,7 @@ function App() {
         />
         <Route path="/contacts" element={<Contact />} />
 
-        <Route path="/profile" element={<Login />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

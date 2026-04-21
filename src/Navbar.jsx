@@ -11,6 +11,8 @@ const navLinks = [
 
 export default function Navbar({ cartCount = 0, profilePath = "/profile" }) {
   const navigate = useNavigate();
+  const isLoggedIn = Boolean(localStorage.getItem("loggedInUser"));
+  const resolvedProfilePath = isLoggedIn ? "/profile" : profilePath;
 
   return (
     <div className="site-navbar-shell">
@@ -52,7 +54,7 @@ export default function Navbar({ cartCount = 0, profilePath = "/profile" }) {
           <button
             type="button"
             className="icon-btn site-navbar__avatar"
-            onClick={() => navigate(profilePath)}
+            onClick={() => navigate(resolvedProfilePath)}
             aria-label="Profile"
           >
             👤

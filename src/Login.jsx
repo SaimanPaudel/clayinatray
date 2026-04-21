@@ -60,6 +60,7 @@ export default function Login() {
     // Login successful
     localStorage.setItem("loggedInUser", JSON.stringify(matchedUser));
     setSubmitted(true);
+    navigate("/");
   };
 
   return (
