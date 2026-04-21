@@ -1,27 +1,23 @@
-/* ── Shared Auth Styles ── */
-
 .auth-page {
   min-height: 100vh;
-  background-color: #e8e0d5;
-  font-family: Georgia, serif;
+  background: #f5f0eb;
   color: #2c2c2c;
 }
 
-/* ── Navbar ── */
 .navbar {
+  max-width: 1180px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 40px;
-  height: 70px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e0d8cf;
+  gap: 20px;
+  padding: 22px 24px 0;
 }
 
 .navbar-logo {
   font-size: 22px;
   font-weight: 700;
-  color: #2e7d8c;
+  color: #2c2c2c;
   font-style: italic;
   cursor: pointer;
 }
@@ -29,7 +25,7 @@
 .navbar-links {
   display: flex;
   list-style: none;
-  gap: 32px;
+  gap: 12px;
   margin: 0;
   padding: 0;
 }
@@ -38,12 +34,15 @@
   text-decoration: none;
   color: #3a3a3a;
   font-size: 15px;
-  font-family: sans-serif;
   cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 999px;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 .navbar-links a:hover {
-  color: #2e7d8c;
+  background: #e8e2db;
+  color: #1f1f1f;
 }
 
 .navbar-icons {
@@ -51,48 +50,36 @@
   gap: 8px;
 }
 
-.icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  padding: 8px;
-}
-
 .avatar-btn {
-  border: 1.5px solid #ccc;
-  border-radius: 50%;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  padding: 0;
+  justify-content: center;
 }
 
-/* ── Auth Container ── */
 .auth-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh - 84px);
   padding: 40px 20px;
 }
 
-/* ── Auth Card ── */
 .auth-card {
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 28px;
   padding: 48px 40px;
   width: 100%;
   max-width: 480px;
-  border: 1px solid #e0d8cf;
+  border: 1px solid #ebe3db;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
 }
 
-/* ── Title ── */
 .auth-title {
   font-size: 28px;
   font-weight: 600;
   color: #1a1a1a;
   margin: 0 0 8px;
   text-align: center;
-  font-family: Georgia, serif;
 }
 
 .auth-subtitle {
@@ -101,10 +88,8 @@
   text-align: center;
   margin: 0 0 28px;
   line-height: 1.6;
-  font-family: sans-serif;
 }
 
-/* ── Form ── */
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -122,25 +107,24 @@
   font-size: 14px;
   font-weight: 500;
   color: #1a1a1a;
-  font-family: sans-serif;
 }
 
 .form-input {
   width: 100%;
   padding: 14px 16px;
   border: 1.5px solid #ddd6cc;
-  border-radius: 10px;
+  border-radius: 14px;
   font-size: 15px;
   color: #1a1a1a;
   background: #ffffff;
   outline: none;
   box-sizing: border-box;
-  font-family: sans-serif;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-input:focus {
-  border-color: #2e7d8c;
+  border-color: #2e7b92;
+  box-shadow: 0 0 0 4px rgba(46, 123, 146, 0.08);
 }
 
 .form-input.input-error {
@@ -148,15 +132,12 @@
   background: #fff8f8;
 }
 
-/* ── Error text ── */
 .error-text {
   font-size: 12px;
   color: #e05252;
   margin: 0;
-  font-family: sans-serif;
 }
 
-/* ── Forgot password link ── */
 .forgot-link {
   text-align: right;
   margin-top: -8px;
@@ -164,9 +145,8 @@
 
 .forgot-link a {
   font-size: 13px;
-  color: #2e7d8c;
+  color: #2e7b92;
   cursor: pointer;
-  font-family: sans-serif;
   text-decoration: none;
 }
 
@@ -174,36 +154,35 @@
   text-decoration: underline;
 }
 
-/* ── Submit Button ── */
 .auth-btn {
   width: 100%;
   padding: 16px;
-  background-color: #c1654a;
+  background-color: #c97352;
   color: #ffffff;
   border: none;
-  border-radius: 10px;
+  border-radius: 16px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
-  font-family: sans-serif;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .auth-btn:hover {
-  background-color: #a8553c;
+  background-color: #b96344;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 22px rgba(201, 115, 82, 0.3);
 }
 
-/* ── Switch between login/signup ── */
 .switch-text {
   font-size: 14px;
   color: #6b6b6b;
   text-align: center;
   margin: 0;
-  font-family: sans-serif;
 }
 
 .switch-text a {
-  color: #2e7d8c;
+  color: #2e7b92;
   cursor: pointer;
   font-weight: 500;
   text-decoration: none;
@@ -213,7 +192,6 @@
   text-decoration: underline;
 }
 
-/* ── Success Box ── */
 .success-box {
   display: flex;
   flex-direction: column;
@@ -238,119 +216,66 @@
 
 .success-box h2 {
   font-size: 22px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0;
-  font-family: Georgia, serif;
 }
 
-.success-box p {
-  font-size: 14px;
-  color: #6b6b6b;
-  margin: 0;
-  font-family: sans-serif;
+.field-hint,
+.marketing-note,
+.reset-email,
+.checklist-title,
+.check-pass,
+.check-fail,
+.checkbox-label,
+.terms-link {
+  font-size: 13px;
 }
 
-.reset-email {
-  font-weight: 600 !important;
-  color: #2e7d8c !important;
-}
-
-/* ── Field hint ── */
-.field-hint {
-  font-size: 12px;
-  color: #9a9089;
-  font-weight: 400;
-  font-family: sans-serif;
-}
-
-/* ── Password checklist ── */
-.password-checklist {
-  background: #f8f5f1;
-  border-radius: 8px;
-  padding: 12px 16px;
+.password-checklist,
+.checkbox-group {
   margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.checklist-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #3a3a3a;
-  margin: 0 0 6px;
-  font-family: sans-serif;
 }
 
 .check-pass {
-  font-size: 12px;
   color: #2d6a4f;
-  margin: 0;
-  font-family: sans-serif;
 }
 
 .check-fail {
-  font-size: 12px;
-  color: #e05252;
-  margin: 0;
-  font-family: sans-serif;
-}
-
-/* ── Checkbox ── */
-.checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  color: #9c6b59;
 }
 
 .checkbox-label {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  cursor: pointer;
-  font-size: 13px;
-  color: #3a3a3a;
-  font-family: sans-serif;
-  line-height: 1.5;
+  line-height: 1.6;
+  color: #6b6b6b;
 }
 
 .checkbox-input {
-  width: 16px;
-  height: 16px;
-  margin-top: 2px;
-  accent-color: #2e7d8c;
-  cursor: pointer;
-  flex-shrink: 0;
+  margin-top: 3px;
 }
 
 .terms-link {
-  color: #2e7d8c;
+  color: #2e7b92;
+  text-decoration: none;
+}
+
+.terms-link:hover {
   text-decoration: underline;
-  font-weight: 500;
 }
 
-.optional-tag {
-  color: #9a9089;
-  font-size: 12px;
-}
-
-/* ── Marketing note on success ── */
-.marketing-note {
-  font-size: 13px;
-  color: #2e7d8c !important;
-  font-family: sans-serif;
-}
-
-/* ── Responsive ── */
-@media (max-width: 600px) {
-  .auth-card {
-    padding: 32px 24px;
-  }
+@media (max-width: 900px) {
   .navbar {
-    padding: 0 20px;
+    flex-direction: column;
+    align-items: flex-start;
   }
+
   .navbar-links {
-    display: none;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-card {
+    padding: 36px 24px;
   }
 }

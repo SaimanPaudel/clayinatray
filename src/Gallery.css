@@ -1,16 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@300;400;600&display=swap');
-
-/* ── PAGE ─────────────────────────────────────────────────── */
 .gallery-page {
-  background: #f5f0e8;
+  background: #f5f0eb;
   min-height: 100vh;
-  padding: 24px 80px 80px;
-  font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+  padding: 24px 32px 80px;
   box-sizing: border-box;
 }
 
 .page-navbar {
-  max-width: 1200px;
+  max-width: 1180px;
   margin: 0 auto 40px;
   display: flex;
   align-items: center;
@@ -22,7 +18,6 @@
   border: none;
   background: transparent;
   color: #2c2c2c;
-  font-family: 'Playfair Display', Georgia, serif;
   font-size: 24px;
   font-weight: 600;
   cursor: pointer;
@@ -66,6 +61,13 @@
   gap: 6px;
   cursor: pointer;
   color: #3a3a3a;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.page-navbar__icon:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
 }
 
 .page-navbar__icon--avatar {
@@ -73,14 +75,13 @@
   justify-content: center;
 }
 
-/* ── HEADER ───────────────────────────────────────────────── */
 .gallery-header {
+  max-width: 860px;
+  margin: 0 auto 52px;
   text-align: center;
-  margin-bottom: 52px;
 }
 
 .gallery-title {
-  font-family: 'Playfair Display', Georgia, serif;
   font-size: clamp(28px, 4vw, 42px);
   font-weight: 600;
   color: #2c2c2c;
@@ -91,33 +92,32 @@
   font-size: 17px;
   color: #6b6b6b;
   line-height: 1.75;
-  font-weight: 300;
   max-width: 560px;
   margin: 0 auto;
 }
 
-/* ── GRID ─────────────────────────────────────────────────── */
 .gallery-grid {
+  max-width: 1180px;
+  margin: 0 auto 52px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 28px;
-  margin-bottom: 52px;
 }
 
-/* ── ART CARD ─────────────────────────────────────────────── */
 .art-card {
   background: #ffffff;
-  border-radius: 14px;
+  border: 1px solid #ebe3db;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
   cursor: pointer;
   transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .art-card--hovered,
 .art-card:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.13);
-  transform: translateY(-3px);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.1);
+  transform: translateY(-5px);
 }
 
 .art-card__img-wrap {
@@ -144,7 +144,6 @@
 }
 
 .art-card__title {
-  font-family: 'Playfair Display', Georgia, serif;
   font-size: 19px;
   font-weight: 600;
   color: #2c2c2c;
@@ -176,21 +175,21 @@
   font-size: 14px;
   color: #777;
   line-height: 1.8;
-  font-weight: 300;
   margin: 0;
 }
 
-/* ── VISIT BOX ────────────────────────────────────────────── */
 .visit-box {
-  background: #ffffff;
-  border-radius: 16px;
+  max-width: 1180px;
+  margin: 0 auto;
+  background: #f7f4f1;
+  border: 2px solid #b5ccd3;
+  border-radius: 28px;
   padding: 52px 56px;
   text-align: center;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
 }
 
 .visit-box__title {
-  font-family: 'Playfair Display', Georgia, serif;
   font-size: clamp(24px, 3vw, 34px);
   font-weight: 600;
   color: #4a7c8e;
@@ -203,7 +202,6 @@
   line-height: 1.85;
   max-width: 700px;
   margin: 0 auto;
-  font-weight: 300;
 }
 
 .visit-box__grid {
@@ -217,30 +215,32 @@
 .visit-box__cta {
   margin-top: 28px;
   border: none;
-  background: #c0674a;
+  background: #c97352;
   color: #ffffff;
-  border-radius: 10px;
-  padding: 14px 28px;
+  border-radius: 16px;
+  padding: 16px 28px;
   font-size: 15px;
   font-weight: 600;
-  font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .visit-box__cta:hover {
-  background: #a8573c;
-  transform: translateY(-2px);
+  background: #b96344;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 22px rgba(201, 115, 82, 0.3);
 }
 
 .visit-card {
-  background: #f7f3ed;
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid #ebe3db;
+  border-radius: 18px;
   padding: 26px 28px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
 }
 
 .visit-card__title {
-  font-family: 'Playfair Display', Georgia, serif;
   font-size: 17px;
   font-weight: 600;
   color: #2c2c2c;
@@ -251,36 +251,38 @@
   font-size: 14px;
   color: #777;
   line-height: 1.8;
-  font-weight: 300;
   margin: 0;
 }
 
-/* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 900px) {
+  .page-navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .page-navbar__links {
-    display: none;
+    flex-wrap: wrap;
   }
 
   .gallery-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
+
   .visit-box__grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 580px) {
+@media (max-width: 640px) {
   .gallery-page {
-    padding: 20px 20px 60px;
-  }
-
-  .page-navbar {
-    margin-bottom: 28px;
+    padding-left: 20px;
+    padding-right: 20px;
   }
 
   .gallery-grid {
     grid-template-columns: 1fr;
   }
+
   .visit-box {
     padding: 36px 24px;
   }
