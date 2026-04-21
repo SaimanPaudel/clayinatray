@@ -1,15 +1,7 @@
 import { useMemo, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./Accommodation.css";
-
-const navLinks = [
-  { name: "Home", path: "/" },
-  { name: "About Us", path: "/about-us" },
-  { name: "Gallery", path: "/gallery" },
-  { name: "Accommodation", path: "/accommodation" },
-  { name: "Products", path: "/products" },
-  { name: "Contacts", path: "/contacts" },
-];
+import Navbar from "./Navbar";
 
 const properties = [
   {
@@ -79,51 +71,7 @@ export default function Accommodation({ cart = [], setCart }) {
 
   return (
     <div className="accommodation-page">
-      <nav className="stay-navbar">
-        <button
-          type="button"
-          className="stay-navbar__logo"
-          onClick={() => navigate("/")}
-        >
-          Clay in a Tray
-        </button>
-
-        <ul className="stay-navbar__links">
-          {navLinks.map((link) => (
-            <li key={link.path}>
-              <NavLink
-                to={link.path}
-                className={({ isActive }) =>
-                  `stay-navbar__link ${isActive ? "stay-navbar__link--active" : ""}`
-                }
-              >
-                {link.name}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-
-        <div className="stay-navbar__icons">
-          <button
-            type="button"
-            className="stay-navbar__icon"
-            onClick={() => navigate("/cart")}
-          >
-            🛒 <span>({cart.length})</span>
-          </button>
-          <button type="button" className="stay-navbar__icon" aria-label="Menu">
-            ☰
-          </button>
-          <button
-            type="button"
-            className="stay-navbar__icon stay-navbar__icon--avatar"
-            onClick={() => navigate("/profile")}
-            aria-label="Profile"
-          >
-            👤
-          </button>
-        </div>
-      </nav>
+      <Navbar cartCount={cart.length} />
 
       <header className="stay-hero">
         <div className="stay-hero__overlay">

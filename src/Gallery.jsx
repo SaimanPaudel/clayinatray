@@ -1,15 +1,7 @@
 import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./Gallery.css";
-
-const navLinks = [
-  { name: "Home", path: "/" },
-  { name: "About Us", path: "/about-us" },
-  { name: "Gallery", path: "/gallery" },
-  { name: "Accommodation", path: "/accommodation" },
-  { name: "Products", path: "/products" },
-  { name: "Contacts", path: "/contacts" },
-];
+import Navbar from "./Navbar";
 
 const artworks = [
   {
@@ -65,51 +57,7 @@ function Gallery({ cart = [] }) {
 
   return (
     <div className="gallery-page">
-      <nav className="page-navbar">
-        <button
-          type="button"
-          className="page-navbar__logo"
-          onClick={() => navigate("/")}
-        >
-          Clay in a Tray
-        </button>
-
-        <ul className="page-navbar__links">
-          {navLinks.map((link) => (
-            <li key={link.path}>
-              <NavLink
-                to={link.path}
-                className={({ isActive }) =>
-                  `page-navbar__link ${isActive ? "page-navbar__link--active" : ""}`
-                }
-              >
-                {link.name}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-
-        <div className="page-navbar__icons">
-          <button
-            type="button"
-            className="page-navbar__icon"
-            onClick={() => navigate("/cart")}
-          >
-            🛒 <span>({cart.length})</span>
-          </button>
-          <button type="button" className="page-navbar__icon" aria-label="Menu">
-            ☰
-          </button>
-          <button
-            type="button"
-            className="page-navbar__icon page-navbar__icon--avatar"
-            onClick={() => navigate("/profile")}
-            aria-label="Profile"
-          >
-            👤
-          </button>
-        </div>
-      </nav>
+      <Navbar cartCount={cart.length} />
 
       {/* HEADER */}
       <div className="gallery-header">

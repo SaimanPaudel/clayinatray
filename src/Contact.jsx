@@ -1,15 +1,7 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./Contact.css";
-
-const navLinks = [
-  { name: "Home", path: "/" },
-  { name: "About Us", path: "/about-us" },
-  { name: "Gallery", path: "/gallery" },
-  { name: "Accommodation", path: "/accommodation" },
-  { name: "Products", path: "/products" },
-  { name: "Contacts", path: "/contacts" },
-];
+import Navbar from "./Navbar";
 
 export default function Contact() {
   const navigate = useNavigate();
@@ -34,34 +26,7 @@ export default function Contact() {
 
   return (
     <div className="contact-page">
-
-      {/* Navbar */}
-      <nav className="navbar">
-        <button
-          type="button"
-          className="navbar-logo navbar-logo-button"
-          onClick={() => navigate("/")}
-        >
-          Clay in a Tray
-        </button>
-        <ul className="navbar-links">
-          {navLinks.map((link) => (
-            <li key={link.path}>
-              <NavLink
-                to={link.path}
-                className={({ isActive }) => (isActive ? "active" : "")}
-              >
-                {link.name}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-        <div className="navbar-icons">
-          <button className="icon-btn" onClick={() => navigate("/cart")}>🛒</button>
-          <button className="icon-btn">☰</button>
-          <button className="icon-btn avatar-btn" onClick={() => navigate("/profile")}>👤</button>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero */}
       <div className="contact-hero">

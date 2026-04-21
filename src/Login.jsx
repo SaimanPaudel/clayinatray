@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./Login.css";
+import Navbar from "./Navbar";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -63,24 +64,7 @@ export default function Login() {
 
   return (
     <div className="auth-page">
-      <nav className="navbar">
-        <div className="navbar-logo" onClick={() => navigate("/")}>
-          Clay in a Tray
-        </div>
-        <ul className="navbar-links">
-          <li><a onClick={() => navigate("/")}>Home</a></li>
-          <li><a href="#">About Us</a></li>
-          <li><a href="#">Gallery</a></li>
-          <li><a href="#">Accommodation</a></li>
-          <li><a href="#">Products</a></li>
-          <li><a onClick={() => navigate("/contacts")}>Contacts</a></li>
-        </ul>
-        <div className="navbar-icons">
-          <button className="icon-btn" onClick={() => navigate("/cart")}>🛒</button>
-          <button className="icon-btn">☰</button>
-          <button className="icon-btn avatar-btn" onClick={() => navigate("/login")}>👤</button>
-        </div>
-      </nav>
+      <Navbar profilePath="/login" />
 
       <div className="auth-container">
         <div className="auth-card">

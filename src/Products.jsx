@@ -1,15 +1,7 @@
 import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./Products.css";
-
-const navLinks = [
-  { name: "Home", path: "/" },
-  { name: "About Us", path: "/about-us" },
-  { name: "Gallery", path: "/gallery" },
-  { name: "Accommodation", path: "/accommodation" },
-  { name: "Products", path: "/products" },
-  { name: "Contacts", path: "/contacts" },
-];
+import Navbar from "./Navbar";
 
 const products = [
   {
@@ -55,51 +47,7 @@ export default function Products({ cart = [], setCart }) {
 
   return (
     <div className="products-page">
-      <nav className="products-navbar">
-        <button
-          type="button"
-          className="products-navbar__logo"
-          onClick={() => navigate("/")}
-        >
-          Clay in a Tray
-        </button>
-
-        <ul className="products-navbar__links">
-          {navLinks.map((link) => (
-            <li key={link.path}>
-              <NavLink
-                to={link.path}
-                className={({ isActive }) =>
-                  `products-navbar__link ${isActive ? "products-navbar__link--active" : ""}`
-                }
-              >
-                {link.name}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-
-        <div className="products-navbar__icons">
-          <button
-            type="button"
-            className="products-navbar__icon"
-            onClick={() => navigate("/cart")}
-          >
-            🛒 <span>({cart.length})</span>
-          </button>
-          <button type="button" className="products-navbar__icon" aria-label="Menu">
-            ☰
-          </button>
-          <button
-            type="button"
-            className="products-navbar__icon products-navbar__icon--avatar"
-            onClick={() => navigate("/profile")}
-            aria-label="Profile"
-          >
-            👤
-          </button>
-        </div>
-      </nav>
+      <Navbar cartCount={cart.length} />
 
       <header className="products-hero">
         <p className="products-hero__eyebrow">Original Artwork Collection</p>

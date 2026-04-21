@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./App.css";
+import Navbar from "./Navbar";
 
 const properties = [
   {
@@ -52,20 +53,10 @@ const features = [
   },
 ];
 
-const navLinks = [
-  { name: "Home", path: "/" },
-  { name: "About Us", path: "/about-us" },
-  { name: "Gallery", path: "/gallery" },
-  { name: "Accommodation", path: "/accommodation" },
-  { name: "Products", path: "/products" },
-  { name: "Contacts", path: "/contacts" },
-];
-
 export default function Home({ cart, setCart }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [liked, setLiked] = useState({});
-  const [activeNav, setActiveNav] = useState("Home");
 
   const toggleLike = (id) => {
     setLiked((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -88,50 +79,7 @@ export default function Home({ cart, setCart }) {
 
   return (
     <div style={styles.page}>
-      {/* NAV */}
-      <nav style={styles.nav}>
-        <div style={styles.navInner}>
-          <div style={styles.navLogo}>Clay in a Tray</div>
-
-          <ul style={styles.navLinks}>
-            {navLinks.map((link) => (
-              <li key={link.name}>
-                <button
-                  className={`nav-link ${activeNav === link.name ? "active" : ""}`}
-                  onClick={() => {
-                    setActiveNav(link.name);
-                    navigate(link.path);
-                  }}
-                >
-                  {link.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-
-          <div style={styles.navIcons}>
-            <button
-              className="icon-btn"
-              style={styles.iconBtn}
-              onClick={() => navigate("/cart")}
-            >
-              🛒 <span style={styles.cartCount}>({cart.length})</span>
-            </button>
-
-            <button className="icon-btn" style={styles.iconBtn}>
-              ☰
-            </button>
-
-            <button
-              className="icon-avatar"
-              style={styles.iconAvatar}
-              onClick={() => navigate("/profile")}
-            >
-              👤
-            </button>
-          </div>
-        </div>
-      </nav>
+      <Navbar cartCount={cart.length} />
 
       {/* SEARCH */}
       <div style={styles.searchBarWrap}>
@@ -305,82 +253,6 @@ const styles = {
     background: "#f5f0eb",
     minHeight: "100vh",
     color: "#2c2c2c",
-  },
-
-  nav: {
-    position: "sticky",
-    top: 0,
-    zIndex: 100,
-    background: "#f5f0eb",
-    borderBottom: "1px solid #e8e2db",
-  },
-
-  navInner: {
-    maxWidth: 1200,
-    margin: "0 auto",
-    minHeight: 72,
-    padding: "0 24px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 20,
-  },
-
-  navLogo: {
-    color: "#3a7a8c",
-    fontSize: "1.7rem",
-    fontStyle: "italic",
-    fontWeight: 600,
-    whiteSpace: "nowrap",
-    flexShrink: 0,
-  },
-
-  navLinks: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    listStyle: "none",
-    margin: 0,
-    padding: 0,
-    flex: 1,
-    flexWrap: "wrap",
-  },
-
-  navIcons: {
-    display: "flex",
-    gap: 8,
-    alignItems: "center",
-    flexShrink: 0,
-  },
-
-  iconBtn: {
-    border: "1px solid #ddd3ca",
-    background: "#fffaf6",
-    borderRadius: 999,
-    height: 38,
-    padding: "0 12px",
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-    cursor: "pointer",
-    color: "#3a3a3a",
-  },
-
-  cartCount: {
-    fontWeight: 600,
-  },
-
-  iconAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: "50%",
-    border: "1px solid #ddd3ca",
-    background: "#fffaf6",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
   },
 
   searchBarWrap: {
