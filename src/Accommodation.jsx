@@ -1,150 +1,110 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Accommodation.css";
 import Navbar from "./Navbar";
 
 const properties = [
   {
-    id: 1,
-    name: "South Golden Beach House",
-    location: "South Golden Beach, Byron Bay",
+    slug: 'upstairs-retreat',
+    badge: 'Pet Friendly',
+    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+    location: 'South Golden Beach, Byron Bay, NSW',
+    title: 'South Golden Beach House - Upstairs Retreat',
     guests: 6,
     beds: 2,
     baths: 1,
+    description: 'An original Byron Bay Aussie Beach House seconds from the sand. Family & Pet Friendly. Sleeps 6',
     price: 180,
-    tag: "Pet Friendly",
-    image:
-      "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=900&q=80",
-    description:
-      "A light-filled upstairs retreat with original artworks, sea breezes, and an easy walk to the sand.",
+    rating: 4.96,
+    reviews: 189,
   },
   {
-    id: 2,
-    name: "South Golden Sea Shack",
-    location: "South Golden Beach, Byron Bay",
+    slug: 'ground-floor-apartment',
+    badge: 'Pet Friendly',
+    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
+    location: 'South Golden Beach, Byron Bay, NSW',
+    title: 'South Golden Sea Shack - Ground Floor Apartment',
     guests: 5,
     beds: 2,
     baths: 1,
+    description: 'Just steps from beautiful South Golden Beach. Entire Sea Shack Apartment with industrial-Moroccan charm',
     price: 165,
-    tag: "Family Stay",
-    image:
-      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=900&q=80",
-    description:
-      "A relaxed ground-floor apartment with coastal character, handcrafted details, and space to unwind.",
+    rating: 4.94,
+    reviews: 167,
   },
 ];
 
-const features = [
-  {
-    title: "Steps from the Sand",
-    body: "Start your day with a quick stroll to South Golden Beach for a swim, coffee, or sunset walk.",
-  },
-  {
-    title: "Creative Coastal Interiors",
-    body: "Each stay is styled with original art, ceramics, and warm details inspired by Jolene's studio.",
-  },
-  {
-    title: "Relaxed Local Living",
-    body: "Stay close to Byron Bay while enjoying a quieter beachside rhythm with markets and cafes nearby.",
-  },
-];
-
-export default function Accommodation({ cart = [], setCart }) {
+// ✅ FIXED: Now accepts cart and setCart props, and renders Navbar
+export default function Accommodation({ cart, setCart }) {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [saved, setSaved] = useState({});
 
-  const filteredProperties = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return properties;
-
-    return properties.filter((property) =>
-      `${property.name} ${property.location} ${property.description} ${property.tag}`
-        .toLowerCase()
-        .includes(query)
-    );
-  }, [searchQuery]);
-
-  const addToCart = (property) => {
-    if (!setCart) return;
-    setCart((prev) => [...prev, { ...property, type: "accommodation" }]);
+  const toggleSave = (slug, e) => {
+    e.stopPropagation();
+    setSaved(prev => ({ ...prev, [slug]: !prev[slug] }));
   };
 
   return (
-    <div className="accommodation-page">
-      <Navbar cartCount={cart.length} />
+    <div className="accom-page">
+      {/* ✅ FIXED: Navbar now renders with cart count */}
+      <Navbar cartCount={cart ? cart.length : 0} />
 
-      <header className="stay-hero">
-        <div className="stay-hero__overlay">
-          <p className="stay-hero__eyebrow">Beachside Retreats</p>
-          <h1>Stay by the ocean, surrounded by art.</h1>
-          <p className="stay-hero__copy">
-            Discover two welcoming South Golden Beach stays designed for slow mornings,
-            creative afternoons, and easy coastal evenings.
-          </p>
-        </div>
-      </header>
+      <div className="accom-search-bar">
+        <span className="accom-search-icon">🔍</span>
+        <input type="text" placeholder="Search South Golden Beach" />
+      </div>
 
-      <section className="stay-search">
-        <input
-          type="text"
-          placeholder="Search South Golden Beach"
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-        />
-      </section>
+      <div className="accom-hero">
+        <h1>South Golden Beach Properties</h1>
+        <p>Experience the perfect blend of beachside living and artistic charm. Both properties are steps from beautiful South Golden Beach in Byron Bay's Northern Rivers region.</p>
+      </div>
 
-      <section className="stay-content">
-        <div className="stay-section-heading">
-          <h2>Available Accommodation</h2>
-          <p>
-            Each property blends beach-house comfort with Clay in a Tray's creative spirit.
-          </p>
-        </div>
-
-        <div className="stay-grid">
-          {filteredProperties.map((property) => (
-            <article key={property.id} className="stay-card">
-              <div className="stay-card__image-wrap">
-                <img src={property.image} alt={property.name} className="stay-card__image" />
-                <span className="stay-card__tag">{property.tag}</span>
+      <div className="accom-grid">
+        {properties.map(p => (
+          <div key={p.slug} className="accom-card" onClick={() => navigate(`/accommodation/${p.slug}`)}>
+            <div className="accom-card-img-wrap">
+              <span className="accom-badge">{p.badge}</span>
+              <button className="accom-save-btn" onClick={e => toggleSave(p.slug, e)}>
+                {saved[p.slug] ? '❤️' : '🤍'}
+              </button>
+              <img src={p.image} alt={p.title} />
+              <div className="accom-rating-bubble">⭐ {p.rating}</div>
+            </div>
+            <div className="accom-card-body">
+              <p className="accom-card-location">{p.location}</p>
+              <h3 className="accom-card-title">{p.title}</h3>
+              <div className="accom-card-meta">
+                <span>👥 {p.guests} guests</span>
+                <span>🛏 {p.beds} beds</span>
+                <span>🛁 {p.baths} bath</span>
               </div>
-
-              <div className="stay-card__body">
-                <p className="stay-card__location">{property.location}</p>
-                <h3>{property.name}</h3>
-                <div className="stay-card__meta">
-                  <span>👥 {property.guests} guests</span>
-                  <span>🛏 {property.beds} beds</span>
-                  <span>🚿 {property.baths} bath</span>
-                </div>
-                <p className="stay-card__description">{property.description}</p>
-
-                <div className="stay-card__footer">
-                  <div>
-                    <strong>${property.price}</strong>
-                    <span> / night</span>
-                  </div>
-                  <button type="button" onClick={() => addToCart(property)}>
-                    Add to Cart
-                  </button>
-                </div>
+              <p className="accom-card-desc">{p.description}</p>
+              <div className="accom-card-footer">
+                <span className="accom-price"><strong>${p.price}</strong> / night</span>
+                <span className="accom-footer-rating">⭐ {p.rating} ({p.reviews})</span>
               </div>
-            </article>
-          ))}
-        </div>
-      </section>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      <section className="stay-features">
-        <h2>Why guests love staying here</h2>
-        <div className="stay-features__grid">
-          {features.map((feature) => (
-            <article key={feature.title} className="stay-feature">
-              <h3>{feature.title}</h3>
-              <p>{feature.body}</p>
-            </article>
-          ))}
+      <div className="accom-why">
+        <h2>Why Stay at South Golden Beach?</h2>
+        <div className="accom-why-grid">
+          <div>
+            <h4>Steps from the Sand</h4>
+            <p>Wake up and be on the beach within minutes – perfect for morning swims and sunset walks</p>
+          </div>
+          <div>
+            <h4>Pet &amp; Family Friendly</h4>
+            <p>Bring the whole family including furry friends for a true home-away-from-home experience</p>
+          </div>
+          <div>
+            <h4>Local Living</h4>
+            <p>Experience Byron Bay like a local with cafés, markets, and hidden beaches nearby</p>
+          </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
