@@ -13,7 +13,7 @@ import AboutUs from "./AboutUs";
 import Gallery from "./Gallery";
 import Accommodation from "./Accommodation";
 import Products from "./Products";
-
+import PropertyDetail from "./PropertyDetail";
 function App() {
   const [cart, setCart] = useState([]);
 
@@ -29,6 +29,8 @@ function App() {
           path="/accommodation"
           element={<Accommodation cart={cart} setCart={setCart} />}
         />
+              <Route path="/accommodation/:slug" element={<PropertyDetail cart={cart} setCart={setCart} />} />
+      
         <Route
           path="/products"
           element={<Products cart={cart} setCart={setCart} />}
