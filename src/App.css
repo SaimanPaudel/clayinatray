@@ -25,6 +25,7 @@ input {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
+  font-weight: bold;
 }
 
 .site-navbar__logo {
