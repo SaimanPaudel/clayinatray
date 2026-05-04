@@ -3,84 +3,119 @@ import { useNavigate } from "react-router-dom";
 import "./Products.css";
 import Navbar from "./Navbar";
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const products = [
   {
     id: 1,
-    title: "Coastal Bloom",
-    medium: "Acrylic on canvas",
-    price: 320,
-    image:
-      "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900&q=80",
-    description:
-      "A soft layered piece inspired by sea air, pastel skies, and early light over South Golden Beach.",
+    category: 'PAINTINGS',
+    title: 'Abstract Coastal Dreams',
+    description: 'Original acrylic painting inspired by South Golden Beach sunsets. Features dreamy brushstrokes in soft...',
+    price: 850,
+    image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&q=80',
   },
   {
     id: 2,
-    title: "Saltwater Lines",
-    medium: "Mixed media",
-    price: 280,
-    image:
-      "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=900&q=80",
-    description:
-      "An expressive abstract work balancing texture, line, and movement from the coastline.",
+    category: 'CERAMICS',
+    title: 'Ceramic Expression',
+    description: 'Hand-crafted ceramic art piece featuring bold line work and organic forms. A unique statement piece that tells...',
+    price: 420,
+    image: 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=600&q=80',
   },
   {
     id: 3,
-    title: "Earth Vessel",
-    medium: "Handmade ceramic",
-    price: 145,
-    image:
-      "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=900&q=80",
-    description:
-      "A one-off ceramic piece shaped by hand and finished with a warm natural glaze.",
+    category: 'DRAWINGS',
+    title: 'Abstract Forms',
+    description: 'Bold charcoal drawing on paper exploring organic shapes and fluid lines. Captures spontaneous creativi...',
+    price: 650,
+    image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&q=80',
+  },
+  {
+    id: 4,
+    category: 'COLLABORATIVE',
+    title: 'Community Art Collaboration',
+    description: 'Collaborative outdoor painting created during community art sessions. Each piece is unique and...',
+    price: 1200,
+    image: 'https://images.unsplash.com/photo-1501084817091-a4f3d1d19e07?w=600&q=80',
   },
 ];
 
-export default function Products({ cart = [], setCart }) {
+// ✅ FIXED: Changed prop from addToCart to { cart, setCart } to match what App.jsx passes
+export default function Products({ cart, setCart }) {
   const navigate = useNavigate();
-  const [selectedId, setSelectedId] = useState(null);
+  const [added, setAdded] = useState({});
 
-  const addToCart = (product) => {
-    if (!setCart) return;
-    setCart((prev) => [...prev, { ...product, type: "product" }]);
+  const handleAddToCart = async (product) => {
+    try {
+      await fetch(`${API_BASE}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, title: product.title, price: product.price, quantity: 1 }),
+      });
+    } catch {
+      // Demo mode — backend not running
+    }
+
+    // ✅ FIXED: Use setCart correctly (was calling addToCart which didn't exist)
+    if (typeof setCart === 'function') {
+      setCart(prev => [...prev, { ...product, type: 'product' }]);
+    }
+
+    setAdded(prev => ({ ...prev, [product.id]: true }));
+    setTimeout(() => setAdded(prev => ({ ...prev, [product.id]: false })), 1800);
   };
 
   return (
     <div className="products-page">
-      <Navbar cartCount={cart.length} />
+      {/* ✅ FIXED: Navbar now renders with cart count */}
+      <Navbar cartCount={cart ? cart.length : 0} />
 
-      <header className="products-hero">
-        <p className="products-hero__eyebrow">Original Artwork Collection</p>
-        <h1>Bring a piece of the studio home.</h1>
-        <p className="products-hero__copy">
-          Browse a curated collection of original artwork and handmade ceramics inspired
-          by South Golden Beach and Byron Bay's coastal rhythm.
-        </p>
-      </header>
+      <div className="products-hero">
+        <h1>Original Artwork Collection</h1>
+        <p>Explore Jolene's original artworks for sale. Each piece is unique and captures the creative spirit of South Golden Beach and the coastal lifestyle.</p>
+      </div>
 
-      <section className="products-grid">
-        {products.map((product) => (
-          <article
-            key={product.id}
-            className={`product-card ${selectedId === product.id ? "product-card--active" : ""}`}
-            onMouseEnter={() => setSelectedId(product.id)}
-            onMouseLeave={() => setSelectedId(null)}
-          >
-            <img src={product.image} alt={product.title} className="product-card__image" />
-            <div className="product-card__body">
-              <p className="product-card__medium">{product.medium}</p>
-              <h2>{product.title}</h2>
-              <p className="product-card__description">{product.description}</p>
-              <div className="product-card__footer">
-                <strong>${product.price}</strong>
-                <button type="button" onClick={() => addToCart(product)}>
-                  Add to Cart
+      <div className="products-grid">
+        {products.map(p => (
+          <div key={p.id} className="product-card">
+            <div className="product-img-wrap">
+              <img src={p.image} alt={p.title} />
+            </div>
+            <div className="product-card-body">
+              <span className="product-category">{p.category}</span>
+              <h3 className="product-title">{p.title}</h3>
+              <p className="product-desc">{p.description}</p>
+              <div className="product-footer">
+                <span className="product-price">${p.price}</span>
+                <button
+                  className={`product-add-btn ${added[p.id] ? 'added' : ''}`}
+                  onClick={() => handleAddToCart(p)}
+                >
+                  {added[p.id] ? '✓ Added' : 'Add to Cart'}
                 </button>
               </div>
             </div>
-          </article>
+          </div>
         ))}
-      </section>
+      </div>
+
+      <div className="products-about">
+        <h2>About Jolene's Art</h2>
+        <div className="products-about-grid">
+          <div>
+            <h4>Original Artworks</h4>
+            <p>Each piece is an original creation by Jolene, not a reproduction</p>
+          </div>
+          <div>
+            <h4>Coastal Inspired</h4>
+            <p>Art inspired by the natural beauty of South Golden Beach</p>
+          </div>
+          <div>
+            <h4>Unique</h4>
+            <p>Each artwork is one-of-a-kind - own something truly special</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

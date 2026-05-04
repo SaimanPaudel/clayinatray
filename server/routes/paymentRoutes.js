@@ -5,7 +5,7 @@ const Order = require("../models/Order");
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-
+// ─── Stripe: Create Payment Intent ───────────────────────────────────────────
 router.post("/create-payment-intent", async (req, res) => {
   try {
     const { amount, currency } = req.body;
@@ -27,7 +27,7 @@ router.post("/create-payment-intent", async (req, res) => {
   }
 });
 
-
+// ─── PayPal: Confirm Order ────────────────────────────────────────────────────
 router.post("/paypal/confirm", async (req, res) => {
   try {
     const { orderId, payerEmail, amount, items } = req.body;
@@ -52,7 +52,7 @@ router.post("/paypal/confirm", async (req, res) => {
   }
 });
 
-
+// ─── Stripe: Webhook ──────────────────────────────────────────────────────────
 router.post("/webhook", async (req, res) => {
   const sig = req.headers["stripe-signature"];
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -63,7 +63,7 @@ router.post("/webhook", async (req, res) => {
     if (endpointSecret) {
       event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
     } else {
-      event = JSON.parse(req.body); // testing without secret
+      event = JSON.parse(req.body); // for local testing without secret
     }
   } catch (err) {
     console.error("Webhook error:", err.message);
