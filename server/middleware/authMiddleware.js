@@ -1,14 +1,27 @@
-middleware : 
-module.exports = function tempAuth(req, res, next) {
-  const userId =
-    req.body?.userId || req.query?.userId || req.headers["x-user-id"];
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-  if (!userId) {
-    return res.status(401).json({
-      error: "Unauthorized. Send userId in body, query, or x-user-id header.",
-    });
+const protect = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Not authorized, no token" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) {
+      return res.status(401).json({ message: "Not authorized, user not found" });
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: "Not authorized, token failed" });
   }
-
-  req.user = { id: String(userId) };
-  next();
 };
+
+module.exports = protect;

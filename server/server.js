@@ -20,6 +20,8 @@ app.use("/api/payment/webhook", express.raw({ type: "application/json" }));
 app.use(express.json());
 
 app.use("/api/payment", require("./routes/paymentRoutes"));
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK" });
