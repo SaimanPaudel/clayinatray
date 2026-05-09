@@ -1,5 +1,3 @@
-bookingcontroller : 
-
 const Cart = require("../models/Cart");
 const Booking = require("../models/Booking");
 
@@ -77,6 +75,36 @@ exports.getBookingById = async (req, res) => {
     res.status(200).json(booking);
   } catch (err) {
     console.error("getBookingById error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// PUT /api/bookings/:id/cancel
+exports.cancelBooking = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) return res.status(404).json({ error: "Booking not found" });
+
+    // Check ownership - users can only cancel their own bookings
+    if (booking.userId !== userId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    // Only pending bookings can be cancelled
+    if (booking.status !== "pending") {
+      return res.status(400).json({ 
+        error: `Cannot cancel a booking that is already ${booking.status}` 
+      });
+    }
+
+    booking.status = "cancelled";
+    await booking.save();
+
+    res.status(200).json({ message: "Booking cancelled successfully", booking });
+  } catch (err) {
+    console.error("cancelBooking error:", err.message);
     res.status(500).json({ error: err.message });
   }
 };
