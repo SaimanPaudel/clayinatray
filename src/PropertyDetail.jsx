@@ -13,7 +13,7 @@ const properties = {
     reviewCount: 189,
     price: 180,
     host: 'Jolene',
-    hostImg: 'https://randomuser.me/api/portraits/women/44.jpg',
+    hostImg: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&q=80',
     guests: 6, bedrooms: 2, beds: 3, baths: 1,
     images: [
       'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=80',
@@ -44,7 +44,7 @@ const properties = {
     reviewCount: 167,
     price: 165,
     host: 'Jolene',
-    hostImg: 'https://randomuser.me/api/portraits/women/44.jpg',
+    hostImg: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&q=80',
     guests: 5, bedrooms: 2, beds: 2, baths: 1,
     images: [
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=80',

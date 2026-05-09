@@ -18,7 +18,7 @@ const properties = [
     description:
       "An original Byron Bay Aussie Beach House seconds from the sand. Family & Pet Friendly. Sleeps 6",
     image:
-      "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=800&q=80",
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
   },
   {
     id: 2,
@@ -34,7 +34,7 @@ const properties = [
     description:
       "Just steps from beautiful South Golden Beach. Entire Sea Shack Apartment with industrial-Moroccan charm",
     image:
-      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80",
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
   },
 ];
 
@@ -58,12 +58,9 @@ export default function Home({ cart, setCart }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [liked, setLiked] = useState({});
 
-  const toggleLike = (id) => {
+  const toggleLike = (id, e) => {
+    e.stopPropagation();
     setLiked((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const addToCart = (property) => {
-    setCart((prev) => [...prev, property]);
   };
 
   const filteredProperties = useMemo(() => {
@@ -149,12 +146,17 @@ export default function Home({ cart, setCart }) {
       <section id="properties-section" style={styles.section}>
         <div style={styles.sectionHeader}>
           <h2 style={styles.sectionTitle}>Our Beach Houses</h2>
-          <button className="view-all-btn">View All Details →</button>
+          <button className="view-all-btn" onClick={() => navigate("/accommodation")}>View All Details →</button>
         </div>
 
         <div style={styles.propertyGrid}>
           {filteredProperties.map((p) => (
-            <div key={p.id} className="property-card" style={styles.propertyCard}>
+            <div
+              key={p.id}
+              className="property-card"
+              style={styles.propertyCard}
+              onClick={() => navigate("/accommodation")}
+            >
               <div style={styles.propertyImgWrapper}>
                 <img src={p.image} alt={p.name} style={styles.propertyImg} />
                 <span style={styles.petTag}>{p.tag}</span>
@@ -162,7 +164,7 @@ export default function Home({ cart, setCart }) {
                 <button
                   className="heart-btn"
                   style={styles.heartBtn}
-                  onClick={() => toggleLike(p.id)}
+                  onClick={(e) => toggleLike(p.id, e)}
                 >
                   {liked[p.id] ? "❤️" : "🤍"}
                 </button>
@@ -194,13 +196,7 @@ export default function Home({ cart, setCart }) {
                     <span style={styles.propertyRating}>
                       ⭐ {p.rating} ({p.reviews})
                     </span>
-
-                    <button
-                      className="small-btn-primary"
-                      onClick={() => addToCart(p)}
-                    >
-                      Add
-                    </button>
+                    <span style={styles.viewDetails}>View details →</span>
                   </div>
                 </div>
               </div>
@@ -403,6 +399,8 @@ const styles = {
     overflow: "hidden",
     border: "1px solid #ebe3db",
     boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+    cursor: "pointer",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
   },
 
   propertyImgWrapper: {
@@ -526,6 +524,12 @@ const styles = {
   propertyRating: {
     color: "#555",
     fontSize: "0.92rem",
+  },
+
+  viewDetails: {
+    color: "#3a7a8c",
+    fontSize: "0.92rem",
+    fontWeight: 600,
   },
 
   emptyState: {
