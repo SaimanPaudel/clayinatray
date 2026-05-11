@@ -1,4 +1,4 @@
-booking: 
+
 const mongoose = require("mongoose");
 
 const bookingItemSchema = new mongoose.Schema(

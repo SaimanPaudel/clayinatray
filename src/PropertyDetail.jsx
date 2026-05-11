@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import BookingCalendar from './BookingCalendar';
 import './PropertyDetail.css';
 import Navbar from './Navbar';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 const properties = {
   'upstairs-retreat': {
@@ -78,6 +79,27 @@ export default function PropertyDetail({ cart, setCart }) {
   const [guests, setGuests] = useState(1);
   const [booking, setBooking] = useState({ loading: false, success: false, error: '' });
 
+  const [bookedRanges, setBookedRanges] = useState([]);
+
+useEffect(() => {
+  fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
+    .then(res => res.json())
+    .then(data => setBookedRanges(data.bookedRanges || []))
+    .catch(() => {}); // silent fail is fine
+}, [slug]);
+
+// Helper: returns true if a date falls inside any booked range
+const isDateBooked = (dateStr) => {
+  const date = new Date(dateStr);
+  return bookedRanges.some(range => {
+    const start = new Date(range.checkIn);
+    const end = new Date(range.checkOut);
+    return date >= start && date < end;
+  });
+};
+
+// Helper: today's date as YYYY-MM-DD (can't book in the past)
+const today = new Date().toISOString().split('T')[0];
   if (!property) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
@@ -88,28 +110,42 @@ export default function PropertyDetail({ cart, setCart }) {
 
   // ✅ FIXED: handleReserve is now a proper standalone function (was broken before)
   const handleReserve = async () => {
-    if (!checkIn || !checkOut) {
-      setBooking(b => ({ ...b, error: 'Please select check-in and check-out dates.' }));
-      return;
-    }
-    setBooking({ loading: true, success: false, error: '' });
-    try {
-      const res = await fetch(`${API_BASE}/bookings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ propertySlug: slug, checkIn, checkOut, guests, totalPrice: property.price }),
-      });
-      if (res.ok) {
-        setBooking({ loading: false, success: true, error: '' });
-      } else {
-        const d = await res.json();
-        setBooking({ loading: false, success: false, error: d.message || 'Booking failed.' });
-      }
-    } catch {
-      // Demo mode — no backend running yet, show success anyway
+  if (!checkIn || !checkOut) {
+    setBooking(b => ({ ...b, error: 'Please select check-in and check-out dates.' }));
+    return;
+  }
+
+  setBooking({ loading: true, success: false, error: '' });
+
+  try {
+    const res = await fetch(`${API_BASE}/bookings/direct`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        propertyId: slug,
+        name: property.title,
+        price: property.price,
+        checkIn,
+        checkOut,
+        guests,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
       setBooking({ loading: false, success: true, error: '' });
+      // Refresh booked dates so calendar updates immediately
+      fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
+        .then(r => r.json())
+        .then(d => setBookedRanges(d.bookedRanges || []));
+    } else {
+      setBooking({ loading: false, success: false, error: data.error || 'Booking failed.' });
     }
-  };
+  } catch {
+    setBooking({ loading: false, success: false, error: 'Cannot connect to server. Is it running?' });
+  }
+};
 
   return (
     <div className="pd-page">
@@ -209,16 +245,15 @@ export default function PropertyDetail({ cart, setCart }) {
               <span className="pd-booking-per"> / night</span>
             </div>
 
-            <div className="pd-booking-dates">
-              <div className="pd-date-field">
-                <label>CHECK-IN</label>
-                <input type="date" value={checkIn} onChange={e => setCheckIn(e.target.value)} />
-              </div>
-              <div className="pd-date-field">
-                <label>CHECKOUT</label>
-                <input type="date" value={checkOut} onChange={e => setCheckOut(e.target.value)} />
-              </div>
-            </div>
+            <BookingCalendar
+  bookedRanges={bookedRanges}
+  checkIn={checkIn}
+  checkOut={checkOut}
+  onCheckIn={setCheckIn}
+  onCheckOut={setCheckOut}
+/>
+  
+              
 
             <div className="pd-guests-row">
               <div>
@@ -242,6 +277,7 @@ export default function PropertyDetail({ cart, setCart }) {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+  </div>
+  
+              
+  )}

@@ -22,6 +22,9 @@ app.use(express.json());
 app.use("/api/payment", require("./routes/paymentRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/bookings", require("./routes/bookingRoutes"));
+
+
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK" });
