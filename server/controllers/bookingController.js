@@ -148,6 +148,7 @@ exports.getUserBookings = async (req, res) => {
   }
 };
 
+// PUT /api/bookings/:id/cancel
 exports.cancelBooking = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -170,6 +171,7 @@ exports.cancelBooking = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 // GET /api/bookings/:id
 exports.getBookingById = async (req, res) => {
   try {
@@ -184,6 +186,69 @@ exports.getBookingById = async (req, res) => {
     res.status(200).json(booking);
   } catch (err) {
     console.error("getBookingById error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ─── ADMIN ENDPOINTS ──────────────────────────────────────────────────────
+
+// GET /api/bookings/admin/all — admin sees ALL bookings
+exports.getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find({}).sort({ createdAt: -1 });
+    res.status(200).json(bookings);
+  } catch (err) {
+    console.error("getAllBookings error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// PUT /api/bookings/admin/:id/approve — admin approves a pending booking
+exports.approveBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ error: "Booking not found" });
+
+    if (booking.status !== "pending") {
+      return res.status(400).json({
+        error: `Cannot approve a booking that is already ${booking.status}`,
+      });
+    }
+
+    booking.status = "approved";
+    booking.approvedAt = new Date();
+    booking.approvedBy = req.user.id;
+    await booking.save();
+
+    res.status(200).json({ message: "Booking approved", booking });
+  } catch (err) {
+    console.error("approveBooking error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// PUT /api/bookings/admin/:id/reject — admin rejects a pending booking
+exports.rejectBooking = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ error: "Booking not found" });
+
+    if (booking.status !== "pending") {
+      return res.status(400).json({
+        error: `Cannot reject a booking that is already ${booking.status}`,
+      });
+    }
+
+    booking.status = "rejected";
+    booking.rejectedAt = new Date();
+    booking.rejectedBy = req.user.id;
+    booking.rejectionReason = reason || "No reason provided";
+    await booking.save();
+
+    res.status(200).json({ message: "Booking rejected", booking });
+  } catch (err) {
+    console.error("rejectBooking error:", err.message);
     res.status(500).json({ error: err.message });
   }
 };
