@@ -8,9 +8,12 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
     if (!email) {
       setError("Email is required");
       return;
@@ -19,7 +22,28 @@ export default function ForgotPassword() {
       setError("Please enter a valid email");
       return;
     }
-    setSubmitted(true);
+
+    try {
+      setLoading(true);
+      const res = await fetch("http://localhost:4000/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || "Something went wrong");
+        return;
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      setError("Server error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,7 +69,6 @@ export default function ForgotPassword() {
                 Enter your email and we will send you a reset link.
               </p>
               <form onSubmit={handleSubmit} className="auth-form">
-
                 <div className="form-group">
                   <label className="form-label">Email Address</label>
                   <input
@@ -62,15 +85,14 @@ export default function ForgotPassword() {
                   {error && <p className="error-text">{error}</p>}
                 </div>
 
-                <button type="submit" className="auth-btn">
-                  Send Reset Link
+                <button type="submit" className="auth-btn" disabled={loading}>
+                  {loading ? "Sending..." : "Send Reset Link"}
                 </button>
 
                 <p className="switch-text">
                   Remember your password?{" "}
                   <a onClick={() => navigate("/login")}>Back to login</a>
                 </p>
-
               </form>
             </>
           )}

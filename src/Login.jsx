@@ -10,7 +10,7 @@ export default function Login() {
     password: "",
   });
   const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -32,7 +32,7 @@ export default function Login() {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
@@ -40,27 +40,34 @@ export default function Login() {
       return;
     }
 
-    // Get users from localStorage
-    const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-
-    // Check if email and password match
-    const matchedUser = existingUsers.find(
-      (user) =>
-        user.email === formData.email &&
-        user.password === formData.password
-    );
-
-    if (!matchedUser) {
-      setErrors({
-        email: "Email or password is incorrect",
+    try {
+      setLoading(true);
+      const res = await fetch("http://localhost:4000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
       });
-      return;
-    }
 
-    // Login successful
-    localStorage.setItem("loggedInUser", JSON.stringify(matchedUser));
-    setSubmitted(true);
-    navigate("/");
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrors({ email: data.message || "Invalid email or password" });
+        return;
+      }
+
+      // Save token and user to localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      navigate("/");
+    } catch (err) {
+      setErrors({ email: "Server error. Please try again." });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,60 +76,49 @@ export default function Login() {
 
       <div className="auth-container">
         <div className="auth-card">
-          {submitted ? (
-            <div className="success-box">
-              <div className="success-icon">✓</div>
-              <h2>Welcome Back!</h2>
-              <p>You have successfully logged in.</p>
-              <button className="auth-btn" onClick={() => navigate("/")}>
-                Go to Home
-              </button>
+          <h1 className="auth-title">Welcome Back</h1>
+          <form onSubmit={handleSubmit} className="auth-form">
+
+            <div className="form-group">
+              <label className="form-label">Email Address</label>
+              <input
+                type="text"
+                name="email"
+                className={`form-input ${errors.email ? "input-error" : ""}`}
+                placeholder="you@example.com"
+                value={formData.email}
+                onChange={handleChange}
+              />
+              {errors.email && <p className="error-text">{errors.email}</p>}
             </div>
-          ) : (
-            <>
-              <h1 className="auth-title">Welcome Back</h1>
-              <form onSubmit={handleSubmit} className="auth-form">
 
-                <div className="form-group">
-                  <label className="form-label">Email Address</label>
-                  <input
-                    type="text"
-                    name="email"
-                    className={`form-input ${errors.email ? "input-error" : ""}`}
-                    placeholder="you@example.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                  {errors.email && <p className="error-text">{errors.email}</p>}
-                </div>
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                name="password"
+                className={`form-input ${errors.password ? "input-error" : ""}`}
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
+              />
+              {errors.password && <p className="error-text">{errors.password}</p>}
+            </div>
 
-                <div className="form-group">
-                  <label className="form-label">Password</label>
-                  <input
-                    type="password"
-                    name="password"
-                    className={`form-input ${errors.password ? "input-error" : ""}`}
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                  />
-                  {errors.password && <p className="error-text">{errors.password}</p>}
-                </div>
+            <div className="forgot-link">
+              <a onClick={() => navigate("/forgot-password")}>Forgot password?</a>
+            </div>
 
-                <div className="forgot-link">
-                  <a onClick={() => navigate("/forgot-password")}>Forgot password?</a>
-                </div>
+            <button type="submit" className="auth-btn" disabled={loading}>
+              {loading ? "Logging in..." : "Log In"}
+            </button>
 
-                <button type="submit" className="auth-btn">Log In</button>
+            <p className="switch-text">
+              Don't have an account?{" "}
+              <a onClick={() => navigate("/signup")}>Sign up</a>
+            </p>
 
-                <p className="switch-text">
-                  Don't have an account?{" "}
-                  <a onClick={() => navigate("/signup")}>Sign up</a>
-                </p>
-
-              </form>
-            </>
-          )}
+          </form>
         </div>
       </div>
     </div>

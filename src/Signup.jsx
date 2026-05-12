@@ -15,6 +15,7 @@ export default function Signup() {
   });
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -70,7 +71,7 @@ export default function Signup() {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
@@ -78,24 +79,39 @@ export default function Signup() {
       return;
     }
 
-    const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    const emailExists = existingUsers.find(
-      (user) => user.email === formData.email
-    );
-    if (emailExists) {
-      setErrors({ email: "This email is already registered" });
-      return;
-    }
+    try {
+      setLoading(true);
+      const res = await fetch("http://localhost:4000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-    const newUser = {
-      fullName: formData.fullName,
-      email: formData.email,
-      password: formData.password,
-      marketing: formData.marketing,
-    };
-    existingUsers.push(newUser);
-    localStorage.setItem("users", JSON.stringify(existingUsers));
-    setSubmitted(true);
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.message === "User already exists") {
+          setErrors({ email: "This email is already registered" });
+        } else {
+          setErrors({ email: data.message || "Signup failed" });
+        }
+        return;
+      }
+
+      // Save token to localStorage for auto-login
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      setSubmitted(true);
+    } catch (err) {
+      setErrors({ email: "Server error. Please try again." });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -259,8 +275,8 @@ export default function Signup() {
                   </label>
                 </div>
 
-                <button type="submit" className="auth-btn">
-                  Sign Up
+                <button type="submit" className="auth-btn" disabled={loading}>
+                  {loading ? "Creating Account..." : "Sign Up"}
                 </button>
 
                 <p className="switch-text">

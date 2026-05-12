@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
-
+const adminRoutes = require("./routes/adminRoutes");
 const app = express();
 
 connectDB();
@@ -22,7 +22,7 @@ app.use(express.json());
 app.use("/api/payment", require("./routes/paymentRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
-
+app.use("/api/admin", adminRoutes);
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK" });
 });
