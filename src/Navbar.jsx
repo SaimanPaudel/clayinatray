@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 const navLinks = [
@@ -13,6 +14,25 @@ export default function Navbar({ cartCount = 0, profilePath = "/profile" }) {
   const navigate = useNavigate();
   const isLoggedIn = Boolean(localStorage.getItem("loggedInUser"));
   const resolvedProfilePath = isLoggedIn ? "/profile" : profilePath;
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleMenuClick = (path) => {
+    setMenuOpen(false);
+    navigate(path);
+  };
 
   return (
     <div className="site-navbar-shell">
@@ -48,9 +68,36 @@ export default function Navbar({ cartCount = 0, profilePath = "/profile" }) {
           >
             🛒 <span>({cartCount})</span>
           </button>
-          <button type="button" className="icon-btn" aria-label="Menu">
-            ☰
-          </button>
+
+          {/* ☰ Menu with dropdown */}
+          <div ref={menuRef} style={{ position: "relative" }}>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Menu"
+              onClick={() => setMenuOpen((prev) => !prev)}
+            >
+              ☰
+            </button>
+
+            {menuOpen && (
+              <div style={dropdownStyles.menu}>
+                <button
+                  style={dropdownStyles.item}
+                  onClick={() => handleMenuClick("/my-bookings")}
+                >
+                  📋 My Bookings
+                </button>
+                <button
+                  style={dropdownStyles.item}
+                  onClick={() => handleMenuClick("/my-history")}
+                >
+                  🕘 My History
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
             type="button"
             className="icon-btn site-navbar__avatar"
@@ -64,3 +111,32 @@ export default function Navbar({ cartCount = 0, profilePath = "/profile" }) {
     </div>
   );
 }
+
+const dropdownStyles = {
+  menu: {
+    position: "absolute",
+    top: "calc(100% + 8px)",
+    right: 0,
+    background: "#fff",
+    border: "1px solid #ebe3db",
+    borderRadius: 12,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+    padding: 6,
+    minWidth: 180,
+    zIndex: 100,
+  },
+  item: {
+    display: "block",
+    width: "100%",
+    background: "transparent",
+    border: "none",
+    padding: "10px 14px",
+    fontSize: "0.92rem",
+    color: "#2c2c2c",
+    cursor: "pointer",
+    textAlign: "left",
+    borderRadius: 8,
+    fontFamily: "'Georgia', serif",
+    transition: "background 0.15s",
+  },
+};
