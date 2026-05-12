@@ -12,7 +12,9 @@ const navLinks = [
 
 export default function Navbar({ cartCount = 0, profilePath = "/profile" }) {
   const navigate = useNavigate();
-  const isLoggedIn = Boolean(localStorage.getItem("loggedInUser"));
+  const isLoggedIn = Boolean(
+    localStorage.getItem("loggedInUser") || localStorage.getItem("user")
+  );
   const resolvedProfilePath = isLoggedIn ? "/profile" : profilePath;
 
   const [menuOpen, setMenuOpen] = useState(false);

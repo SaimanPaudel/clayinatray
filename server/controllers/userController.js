@@ -12,12 +12,23 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const user = req.user;
-    const { name, email, password, avatar } = req.body;
+    const { name, email, currentPassword, password, avatar } = req.body;
 
     if (name !== undefined) user.name = name;
     if (email !== undefined) user.email = email;
     if (avatar !== undefined) user.avatar = avatar;
-    if (password) user.password = password;
+    if (password) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: "Current password is required" });
+      }
+
+      const passwordMatches = await user.matchPassword(currentPassword);
+      if (!passwordMatches) {
+        return res.status(401).json({ message: "Current password is incorrect" });
+      }
+
+      user.password = password;
+    }
 
     const updatedUser = await user.save();
 

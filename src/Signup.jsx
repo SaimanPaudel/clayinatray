@@ -102,12 +102,13 @@ export default function Signup() {
         return;
       }
 
-      // Save token to localStorage for auto-login
+      // Save both keys because the profile/bookings pages use loggedInUser.
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("loggedInUser", JSON.stringify(data.user));
 
       setSubmitted(true);
-    } catch (err) {
+    } catch {
       setErrors({ email: "Server error. Please try again." });
     } finally {
       setLoading(false);

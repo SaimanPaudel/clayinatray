@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
 import "./Profile.css";
@@ -15,19 +15,30 @@ export default function Profile() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  const user = useMemo(() => {
+  const [user, setUser] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("loggedInUser") || "null");
+      return JSON.parse(
+        localStorage.getItem("loggedInUser") ||
+          localStorage.getItem("user") ||
+          "null"
+      );
     } catch {
       return null;
     }
-  }, []);
+  });
+
+  const fullName = user?.fullName || user?.name || "";
+
+  const saveUserSession = (updatedUser) => {
+    localStorage.setItem("loggedInUser", JSON.stringify(updatedUser));
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
 
   // Initialize edit data when entering edit mode
   const handleEditClick = () => {
     setEditData({
-      fullName: user?.fullName || "",
+      fullName,
       email: user?.email || "",
     });
     setError("");
@@ -45,7 +56,7 @@ export default function Profile() {
   };
 
   // Save edited profile
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (!editData.fullName.trim() || !editData.email.trim()) {
       setError("All fields are required");
       return;
@@ -57,21 +68,52 @@ export default function Profile() {
       return;
     }
 
-    const updatedUser = {
-      ...user,
-      fullName: editData.fullName,
-      email: editData.email,
-    };
+    try {
+      const token = localStorage.getItem("token");
+      let updatedUser = {
+        ...user,
+        name: editData.fullName,
+        fullName: editData.fullName,
+        email: editData.email,
+      };
 
-    localStorage.setItem("loggedInUser", JSON.stringify(updatedUser));
-    setSuccess("Profile updated successfully!");
-    setIsEditing(false);
-    setError("");
-    setTimeout(() => setSuccess(""), 3000);
+      if (token) {
+        const res = await fetch("http://localhost:4000/api/users/profile", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: editData.fullName,
+            email: editData.email,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.message || "Profile update failed");
+          return;
+        }
+
+        updatedUser = {
+          ...data,
+          fullName: data.name,
+        };
+      }
+
+      saveUserSession(updatedUser);
+      setSuccess("Profile updated successfully!");
+      setIsEditing(false);
+      setError("");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch {
+      setError("Server error. Please try again.");
+    }
   };
 
   // Handle password change
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (
       !passwordData.currentPassword ||
       !passwordData.newPassword ||
@@ -81,7 +123,7 @@ export default function Profile() {
       return;
     }
 
-    if (passwordData.currentPassword !== user?.password) {
+    if (user?.password && passwordData.currentPassword !== user.password) {
       setError("Current password is incorrect");
       return;
     }
@@ -96,25 +138,57 @@ export default function Profile() {
       return;
     }
 
-    const updatedUser = {
-      ...user,
-      password: passwordData.newPassword,
-    };
+    try {
+      const token = localStorage.getItem("token");
+      let updatedUser = {
+        ...user,
+        password: passwordData.newPassword,
+      };
 
-    localStorage.setItem("loggedInUser", JSON.stringify(updatedUser));
-    setSuccess("Password changed successfully!");
-    setIsChangingPassword(false);
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-    setError("");
-    setTimeout(() => setSuccess(""), 3000);
+      if (token) {
+        const res = await fetch("http://localhost:4000/api/users/profile", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            currentPassword: passwordData.currentPassword,
+            password: passwordData.newPassword,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.message || "Password update failed");
+          return;
+        }
+
+        updatedUser = {
+          ...data,
+          fullName: data.name,
+        };
+      }
+
+      saveUserSession(updatedUser);
+      setSuccess("Password changed successfully!");
+      setIsChangingPassword(false);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setError("");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch {
+      setError("Server error. Please try again.");
+    }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("loggedInUser");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
     navigate("/login");
   };
 
@@ -137,7 +211,7 @@ export default function Profile() {
         <div className="profile-card">
           {user ? (
             <>
-              <div className="profile-avatar">{user.fullName?.[0]?.toUpperCase() || "U"}</div>
+              <div className="profile-avatar">{fullName?.[0]?.toUpperCase() || "U"}</div>
               <h1 className="profile-title">Your Profile</h1>
               <p className="profile-subtitle">
                 Welcome back to Clay in a Tray.
@@ -257,7 +331,7 @@ export default function Profile() {
                   <div className="profile-details">
                     <div className="profile-detail">
                       <span className="profile-label">Full Name</span>
-                      <strong>{user.fullName || "Guest User"}</strong>
+                      <strong>{fullName || "Guest User"}</strong>
                     </div>
 
                     <div className="profile-detail">

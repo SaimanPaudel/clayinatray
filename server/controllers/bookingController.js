@@ -148,6 +148,28 @@ exports.getUserBookings = async (req, res) => {
   }
 };
 
+exports.cancelBooking = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    if (booking.userId !== userId) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    booking.status = "cancelled";
+    await booking.save();
+
+    res.status(200).json({ message: "Booking cancelled successfully", booking });
+  } catch (err) {
+    console.error("cancelBooking error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
 // GET /api/bookings/:id
 exports.getBookingById = async (req, res) => {
   try {
@@ -155,7 +177,7 @@ exports.getBookingById = async (req, res) => {
     const booking = await Booking.findById(req.params.id);
 
     if (!booking) return res.status(404).json({ error: "Booking not found" });
-    if (booking.userId !== userId) {
+    if (booking.userId.toString() !== userId) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
