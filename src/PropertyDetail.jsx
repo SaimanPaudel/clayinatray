@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import BookingCalendar from './BookingCalendar';
 import './PropertyDetail.css';
 import Navbar from './Navbar';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 const properties = {
   'upstairs-retreat': {
@@ -13,7 +14,7 @@ const properties = {
     reviewCount: 189,
     price: 180,
     host: 'Jolene',
-    hostImg: 'https://randomuser.me/api/portraits/women/44.jpg',
+    hostImg: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&q=80',
     guests: 6, bedrooms: 2, beds: 3, baths: 1,
     images: [
       'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=80',
@@ -44,7 +45,7 @@ const properties = {
     reviewCount: 167,
     price: 165,
     host: 'Jolene',
-    hostImg: 'https://randomuser.me/api/portraits/women/44.jpg',
+    hostImg: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&q=80',
     guests: 5, bedrooms: 2, beds: 2, baths: 1,
     images: [
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=900&q=80',
@@ -78,6 +79,27 @@ export default function PropertyDetail({ cart, setCart }) {
   const [guests, setGuests] = useState(1);
   const [booking, setBooking] = useState({ loading: false, success: false, error: '' });
 
+  const [bookedRanges, setBookedRanges] = useState([]);
+
+useEffect(() => {
+  fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
+    .then(res => res.json())
+    .then(data => setBookedRanges(data.bookedRanges || []))
+    .catch(() => {}); // silent fail is fine
+}, [slug]);
+
+// Helper: returns true if a date falls inside any booked range
+const isDateBooked = (dateStr) => {
+  const date = new Date(dateStr);
+  return bookedRanges.some(range => {
+    const start = new Date(range.checkIn);
+    const end = new Date(range.checkOut);
+    return date >= start && date < end;
+  });
+};
+
+// Helper: today's date as YYYY-MM-DD (can't book in the past)
+const today = new Date().toISOString().split('T')[0];
   if (!property) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
@@ -88,28 +110,42 @@ export default function PropertyDetail({ cart, setCart }) {
 
   // ✅ FIXED: handleReserve is now a proper standalone function (was broken before)
   const handleReserve = async () => {
-    if (!checkIn || !checkOut) {
-      setBooking(b => ({ ...b, error: 'Please select check-in and check-out dates.' }));
-      return;
-    }
-    setBooking({ loading: true, success: false, error: '' });
-    try {
-      const res = await fetch(`${API_BASE}/bookings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ propertySlug: slug, checkIn, checkOut, guests, totalPrice: property.price }),
-      });
-      if (res.ok) {
-        setBooking({ loading: false, success: true, error: '' });
-      } else {
-        const d = await res.json();
-        setBooking({ loading: false, success: false, error: d.message || 'Booking failed.' });
-      }
-    } catch {
-      // Demo mode — no backend running yet, show success anyway
+  if (!checkIn || !checkOut) {
+    setBooking(b => ({ ...b, error: 'Please select check-in and check-out dates.' }));
+    return;
+  }
+
+  setBooking({ loading: true, success: false, error: '' });
+
+  try {
+    const res = await fetch(`${API_BASE}/bookings/direct`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        propertyId: slug,
+        name: property.title,
+        price: property.price,
+        checkIn,
+        checkOut,
+        guests,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
       setBooking({ loading: false, success: true, error: '' });
+      // Refresh booked dates so calendar updates immediately
+      fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
+        .then(r => r.json())
+        .then(d => setBookedRanges(d.bookedRanges || []));
+    } else {
+      setBooking({ loading: false, success: false, error: data.error || 'Booking failed.' });
     }
-  };
+  } catch {
+    setBooking({ loading: false, success: false, error: 'Cannot connect to server. Is it running?' });
+  }
+};
 
   return (
     <div className="pd-page">
@@ -177,7 +213,7 @@ export default function PropertyDetail({ cart, setCart }) {
               <h3>📅 Calendar availability</h3>
               <p className="pd-calendar-note">
                 This calendar is automatically synced with our Airbnb listing to prevent double bookings.{' '}
-                <a href="https://airbnb.com" target="_blank" rel="noreferrer">View the listing on Airbnb</a>
+                <a href="https://www.airbnb.com.au/rooms/623421073708454500?_set_bev_on_new_domain=1768307146_EAY2RhOTE2Y2IzOT&set_everest_cookie_on_new_domain=1768307146.EAM2RkMTU2ZTllNjhmM2.xc53efQWO2H4AdqDIYHtsu3aKfc2ioZ62008JFaDTeM&source_impression_id=p3_1768894558_P3xwfWqYWa2qliM6" target="_blank" rel="noreferrer">View the listing on Airbnb</a>
               </p>
             </div>
 
@@ -209,16 +245,15 @@ export default function PropertyDetail({ cart, setCart }) {
               <span className="pd-booking-per"> / night</span>
             </div>
 
-            <div className="pd-booking-dates">
-              <div className="pd-date-field">
-                <label>CHECK-IN</label>
-                <input type="date" value={checkIn} onChange={e => setCheckIn(e.target.value)} />
-              </div>
-              <div className="pd-date-field">
-                <label>CHECKOUT</label>
-                <input type="date" value={checkOut} onChange={e => setCheckOut(e.target.value)} />
-              </div>
-            </div>
+            <BookingCalendar
+  bookedRanges={bookedRanges}
+  checkIn={checkIn}
+  checkOut={checkOut}
+  onCheckIn={setCheckIn}
+  onCheckOut={setCheckOut}
+/>
+  
+              
 
             <div className="pd-guests-row">
               <div>
@@ -242,6 +277,7 @@ export default function PropertyDetail({ cart, setCart }) {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+  </div>
+  
+              
+  )}

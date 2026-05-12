@@ -24,7 +24,7 @@ function AboutUs({ cart = [] }) {
         <div className="jolene-card">
           <div className="jolene-card__top">
             <img
-              src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80"
+              src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&q=80"
               alt="Jolene"
               className="jolene-card__avatar"
             />

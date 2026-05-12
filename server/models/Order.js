@@ -47,7 +47,7 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
     },
-
+userId: { type: String, index: true },
     // Items array (friend's version)
     items: [
       {

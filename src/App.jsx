@@ -15,6 +15,9 @@ import Accommodation from "./Accommodation";
 import Products from "./Products";
 import PropertyDetail from "./PropertyDetail";
 import ResetPassword from "./ResetPassword";
+import MyBookings from "./MyBookings";
+import MyHistory from "./MyHistory";
+
 function App() {
   const [cart, setCart] = useState([]);
 
@@ -30,8 +33,8 @@ function App() {
         <Route path="/accommodation"
           element={<Accommodation cart={cart} setCart={setCart} />}
         />
-              <Route path="/accommodation/:slug" element={<PropertyDetail cart={cart} setCart={setCart} />} />
-      
+        <Route path="/accommodation/:slug" element={<PropertyDetail cart={cart} setCart={setCart} />} />
+
         <Route
           path="/products"
           element={<Products cart={cart} setCart={setCart} />}
@@ -39,6 +42,9 @@ function App() {
         <Route path="/contacts" element={<Contact />} />
 
         <Route path="/profile" element={<Profile />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/my-history" element={<MyHistory />} />
+
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} 

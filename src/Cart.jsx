@@ -45,8 +45,6 @@ function PayPalTabContent({ total, onSuccess, onError, onCancel }) {
       style={{ layout: "vertical", color: "gold", shape: "rect", label: "paypal", height: 48 }}
       forceReRender={[total]}
       createOrder={(data, actions) => {
-        // Keep it simple — just pass the total amount without itemised breakdown
-        // to avoid PayPal rejecting due to rounding mismatches
         return actions.order.create({
           purchase_units: [{
             amount: {
@@ -100,6 +98,34 @@ export default function Cart({ cart, setCart }) {
   );
   const serviceFee = Math.round(subtotal * SERVICE_FEE_RATE);
   const total = subtotal + serviceFee;
+
+  // ── Save booking to localStorage on payment success ───────────────────────
+  const saveBookingLocally = (method) => {
+    const user = JSON.parse(localStorage.getItem("loggedInUser") || "null");
+    if (!user) return;
+
+    const booking = {
+      id: Date.now().toString(),
+      userEmail: user.email,
+      properties: cart.map((item, i) => ({
+        propertyId: item.propertyId || item.name,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+        quantity: quantities[i] || 1,
+      })),
+      subtotal,
+      serviceFee,
+      totalPrice: total,
+      status: "pending",
+      paymentMethod: method,
+      createdAt: new Date().toISOString(),
+    };
+
+    const existing = JSON.parse(localStorage.getItem("bookings") || "[]");
+    existing.push(booking);
+    localStorage.setItem("bookings", JSON.stringify(existing));
+  };
 
   // ── Stripe wallet (Apple Pay / Google Pay) setup ──────────────────────────
   useEffect(() => {
@@ -159,7 +185,9 @@ export default function Cart({ cart, setCart }) {
               }
 
               ev.complete("success");
-              setPaymentMethod(result.applePay ? "Apple Pay" : "Google Pay");
+              const method = result.applePay ? "Apple Pay" : "Google Pay";
+              saveBookingLocally(method);
+              setPaymentMethod(method);
               setPaymentDone(true);
             } catch (err) {
               ev.complete("fail");
@@ -211,6 +239,9 @@ export default function Cart({ cart, setCart }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create payment intent");
+
+      // Save booking before redirect
+      saveBookingLocally("Card");
 
       const stripe = await stripePromise;
       const { error: confirmError } = await stripe.confirmPayment({
@@ -385,6 +416,7 @@ export default function Cart({ cart, setCart }) {
                         total={total}
                         onSuccess={(details) => {
                           console.log("PayPal captured:", details.id);
+                          saveBookingLocally("PayPal");
                           setPaymentMethod("PayPal");
                           setPaymentDone(true);
                         }}
