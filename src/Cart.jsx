@@ -6,21 +6,50 @@ import "./App.css";
 import "./Cart.css";
 import Navbar from "./Navbar";
 
-// ─── ENV VARS — add these to your .env file ───────────────────────────────────
-// VITE_STRIPE_PUBLISHABLE_KEY=pk_live_...
-// VITE_PAYPAL_CLIENT_ID=your_paypal_client_id
-// ─────────────────────────────────────────────────────────────────────────────
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID;
-const BACKEND_URL = "http://localhost:4000/api/payment/create-payment-intent";
+const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 const SERVICE_FEE_RATE = 0.14;
 
-// Payment method tabs
 const TABS = ["Wallet", "PayPal", "Card"];
 
-// ── PayPal button wrapper with loading/error states ───────────────────────────
+// ── Save booking to DB ────────────────────────────────────────────────────────
+async function saveBookingToDB({ cart, quantities, subtotal, serviceFee, total, method }) {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+
+  const res = await fetch(`${BACKEND_URL}/api/bookings`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      items: cart.map((item, i) => ({
+        name: item.name,
+        price: item.price,
+        quantity: quantities[i] || 1,
+        image: item.image,
+        propertyId: item.propertyId || item.name,
+      })),
+      subtotal,
+      serviceFee,
+      totalPrice: total,
+      paymentMethod: method,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.message || "Failed to save booking");
+  }
+
+  return res.json();
+}
+
+// ── PayPal button wrapper ─────────────────────────────────────────────────────
 function PayPalTabContent({ total, onSuccess, onError, onCancel }) {
   const [{ isPending, isRejected }] = usePayPalScriptReducer();
 
@@ -44,17 +73,11 @@ function PayPalTabContent({ total, onSuccess, onError, onCancel }) {
     <PayPalButtons
       style={{ layout: "vertical", color: "gold", shape: "rect", label: "paypal", height: 48 }}
       forceReRender={[total]}
-      createOrder={(data, actions) => {
-        return actions.order.create({
-          purchase_units: [{
-            amount: {
-              value: total.toFixed(2),
-              currency_code: "AUD",
-            },
-            description: "Clay in a Tray Order",
-          }],
-        });
-      }}
+      createOrder={(data, actions) =>
+        actions.order.create({
+          purchase_units: [{ amount: { value: total.toFixed(2), currency_code: "AUD" }, description: "Clay in a Tray Order" }],
+        })
+      }
       onApprove={async (data, actions) => {
         try {
           const details = await actions.order.capture();
@@ -63,10 +86,7 @@ function PayPalTabContent({ total, onSuccess, onError, onCancel }) {
           onError(err);
         }
       }}
-      onError={(err) => {
-        console.error("PayPal error:", err);
-        onError(err);
-      }}
+      onError={(err) => { console.error("PayPal error:", err); onError(err); }}
       onCancel={onCancel}
     />
   );
@@ -83,6 +103,9 @@ export default function Cart({ cart, setCart }) {
   const [paymentMethod, setPaymentMethod] = useState(null);
   const [activeTab, setActiveTab] = useState("Wallet");
 
+  // ── Test mode ──────────────────────────────────────────────────────────────
+  const [testMode, setTestMode] = useState(false);
+
   // Stripe wallet state
   const [paymentRequest, setPaymentRequest] = useState(null);
   const [walletAvailable, setWalletAvailable] = useState(false);
@@ -92,44 +115,37 @@ export default function Cart({ cart, setCart }) {
   const [cardLoading, setCardLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const subtotal = cart.reduce(
-    (sum, item, i) => sum + item.price * (quantities[i] || 1),
-    0
-  );
+  const subtotal = cart.reduce((sum, item, i) => sum + item.price * (quantities[i] || 1), 0);
   const serviceFee = Math.round(subtotal * SERVICE_FEE_RATE);
   const total = subtotal + serviceFee;
 
-  // ── Save booking to localStorage on payment success ───────────────────────
-  const saveBookingLocally = (method) => {
-    const user = JSON.parse(localStorage.getItem("loggedInUser") || "null");
-    if (!user) return;
+  // ── Handle success for any payment method ─────────────────────────────────
+  const handlePaymentSuccess = async (method) => {
+    try {
+      await saveBookingToDB({ cart, quantities, subtotal, serviceFee, total, method });
+      setPaymentMethod(method);
+      setPaymentDone(true);
+    } catch (err) {
+      setError("Payment succeeded but booking could not be saved. Please contact support.");
+      console.error(err);
+    }
+  };
 
-    const booking = {
-      id: Date.now().toString(),
-      userEmail: user.email,
-      properties: cart.map((item, i) => ({
-        propertyId: item.propertyId || item.name,
-        name: item.name,
-        price: item.price,
-        image: item.image,
-        quantity: quantities[i] || 1,
-      })),
-      subtotal,
-      serviceFee,
-      totalPrice: total,
-      status: "pending",
-      paymentMethod: method,
-      createdAt: new Date().toISOString(),
-    };
-
-    const existing = JSON.parse(localStorage.getItem("bookings") || "[]");
-    existing.push(booking);
-    localStorage.setItem("bookings", JSON.stringify(existing));
+  // ── Test mode instant success ─────────────────────────────────────────────
+  const handleTestPay = async (method) => {
+    setCardLoading(true);
+    setError(null);
+    try {
+      await handlePaymentSuccess(`${method} (Test)`);
+    } catch (err) {
+      setError(err.message);
+    }
+    setCardLoading(false);
   };
 
   // ── Stripe wallet (Apple Pay / Google Pay) setup ──────────────────────────
   useEffect(() => {
-    if (!showCheckout || total === 0) return;
+    if (!showCheckout || total === 0 || testMode) return;
 
     let pr;
     let isMounted = true;
@@ -162,7 +178,7 @@ export default function Cart({ cart, setCart }) {
             setCardLoading(true);
             setError(null);
             try {
-              const res = await fetch(BACKEND_URL, {
+              const res = await fetch(`${BACKEND_URL}/api/payment/create-payment-intent`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ amount: total * 100, currency: "aud" }),
@@ -186,9 +202,7 @@ export default function Cart({ cart, setCart }) {
 
               ev.complete("success");
               const method = result.applePay ? "Apple Pay" : "Google Pay";
-              saveBookingLocally(method);
-              setPaymentMethod(method);
-              setPaymentDone(true);
+              await handlePaymentSuccess(method);
             } catch (err) {
               ev.complete("fail");
               setError(err.message || "Payment failed. Please try again.");
@@ -209,7 +223,7 @@ export default function Cart({ cart, setCart }) {
       isMounted = false;
       if (pr) pr.off("paymentmethod");
     };
-  }, [showCheckout, total, subtotal, serviceFee]);
+  }, [showCheckout, total, subtotal, serviceFee, testMode]);
 
   // ── Mount Stripe PR button ────────────────────────────────────────────────
   useEffect(() => {
@@ -227,12 +241,12 @@ export default function Cart({ cart, setCart }) {
     })();
   }, [paymentRequest]);
 
-  // ── Stripe card pay (redirect flow) ──────────────────────────────────────
+  // ── Stripe card pay ───────────────────────────────────────────────────────
   const handleCardPay = async () => {
     setCardLoading(true);
     setError(null);
     try {
-      const res = await fetch(BACKEND_URL, {
+      const res = await fetch(`${BACKEND_URL}/api/payment/create-payment-intent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: total * 100, currency: "aud" }),
@@ -240,8 +254,8 @@ export default function Cart({ cart, setCart }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create payment intent");
 
-      // Save booking before redirect
-      saveBookingLocally("Card");
+      // Save booking before redirect (card redirects away from the page)
+      await handlePaymentSuccess("Card");
 
       const stripe = await stripePromise;
       const { error: confirmError } = await stripe.confirmPayment({
@@ -278,6 +292,7 @@ export default function Cart({ cart, setCart }) {
     setWalletAvailable(false);
     setError(null);
     setActiveTab("Wallet");
+    setTestMode(false);
   };
 
   return (
@@ -342,11 +357,7 @@ export default function Cart({ cart, setCart }) {
 
       {/* ── Checkout Modal ── */}
       {showCheckout && (
-        <PayPalScriptProvider options={{
-          "client-id": PAYPAL_CLIENT_ID,
-          currency: "AUD",
-          intent: "capture",
-        }}>
+        <PayPalScriptProvider options={{ "client-id": PAYPAL_CLIENT_ID, currency: "AUD", intent: "capture" }}>
           <div style={styles.overlay} onClick={closeModal}>
             <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
 
@@ -360,17 +371,26 @@ export default function Cart({ cart, setCart }) {
                 /* ── Success screen ── */
                 <div style={styles.successBox}>
                   <div style={styles.successIcon}>✓</div>
-                  <h3 style={{ margin: "0 0 8px", color: "#1a1a1a" }}>Payment Successful!</h3>
+                  <h3 style={{ margin: "0 0 8px", color: "#1a1a1a" }}>Booking Submitted!</h3>
                   <p style={{ color: "#666", fontSize: "0.9rem", marginBottom: 6 }}>
-                    Thank you for your purchase via {paymentMethod}.
+                    Your booking via <strong>{paymentMethod}</strong> is pending admin approval.
                   </p>
-                  <p style={{ color: "#c0533a", fontWeight: 700, fontSize: "1.2rem", marginBottom: 24 }}>
-                    ${total.toLocaleString()}.00 paid
+                  <p style={{ color: "#c0533a", fontWeight: 700, fontSize: "1.2rem", marginBottom: 8 }}>
+                    ${total.toLocaleString()}.00
                   </p>
-                  <button className="btn-primary" style={{ width: "100%" }}
-                    onClick={() => { closeModal(); clearCart(); navigate("/"); }}>
-                    Back to Home
-                  </button>
+                  <p style={{ color: "#888", fontSize: "0.82rem", marginBottom: 24, fontFamily: "sans-serif" }}>
+                    You can track or cancel your booking under <strong>My Bookings</strong>.
+                  </p>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button className="btn-primary" style={{ flex: 1 }}
+                      onClick={() => { closeModal(); clearCart(); navigate("/my-bookings"); }}>
+                      My Bookings
+                    </button>
+                    <button className="btn-secondary" style={{ flex: 1 }}
+                      onClick={() => { closeModal(); clearCart(); navigate("/"); }}>
+                      Back to Home
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -378,6 +398,31 @@ export default function Cart({ cart, setCart }) {
                   <div style={styles.amountBox}>
                     <p style={styles.amountLabel}>Total Amount</p>
                     <p style={styles.amountValue}>${total.toLocaleString()}.00</p>
+                  </div>
+
+                  {/* ── Test Mode Toggle ── */}
+                  <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    background: testMode ? "#fffbea" : "#f9f9f9",
+                    border: `1px solid ${testMode ? "#f0d080" : "#eee"}`,
+                    borderRadius: 10, padding: "10px 14px", marginBottom: 16,
+                    fontFamily: "sans-serif",
+                  }}>
+                    <span style={{ fontSize: "0.83rem", color: testMode ? "#7a5c00" : "#999" }}>
+                      🧪 {testMode ? "Test mode on — no real charge" : "Test mode off — real payment"}
+                    </span>
+                    <button
+                      onClick={() => setTestMode(t => !t)}
+                      style={{
+                        background: testMode ? "#f0c000" : "#ddd",
+                        border: "none", borderRadius: 20,
+                        padding: "4px 14px", fontSize: "0.78rem",
+                        fontWeight: 700, cursor: "pointer",
+                        color: testMode ? "#3a2e00" : "#666",
+                      }}
+                    >
+                      {testMode ? "ON" : "OFF"}
+                    </button>
                   </div>
 
                   {/* Tabs */}
@@ -395,10 +440,14 @@ export default function Cart({ cart, setCart }) {
 
                   {error && <p style={styles.errorBox}>{error}</p>}
 
-                  {/* ── Wallet tab (Apple Pay / Google Pay via Stripe) ── */}
+                  {/* ── Wallet tab ── */}
                   {activeTab === "Wallet" && (
                     <div style={styles.tabContent}>
-                      {walletAvailable ? (
+                      {testMode ? (
+                        <button style={styles.payCard} disabled={cardLoading} onClick={() => handleTestPay("Wallet")}>
+                          {cardLoading ? "Submitting..." : "🧪 Simulate Wallet Pay"}
+                        </button>
+                      ) : walletAvailable ? (
                         <div ref={prButtonRef} />
                       ) : (
                         <p style={styles.walletUnavailable}>
@@ -412,29 +461,41 @@ export default function Cart({ cart, setCart }) {
                   {/* ── PayPal tab ── */}
                   {activeTab === "PayPal" && (
                     <div style={styles.tabContent}>
-                      <PayPalTabContent
-                        total={total}
-                        onSuccess={(details) => {
-                          console.log("PayPal captured:", details.id);
-                          saveBookingLocally("PayPal");
-                          setPaymentMethod("PayPal");
-                          setPaymentDone(true);
-                        }}
-                        onError={() => setError("PayPal payment failed. Please try again.")}
-                        onCancel={() => setError("PayPal payment was cancelled.")}
-                      />
+                      {testMode ? (
+                        <button style={{ ...styles.payCard, background: "#0070ba" }} disabled={cardLoading} onClick={() => handleTestPay("PayPal")}>
+                          {cardLoading ? "Submitting..." : "🧪 Simulate PayPal Pay"}
+                        </button>
+                      ) : (
+                        <PayPalTabContent
+                          total={total}
+                          onSuccess={async (details) => {
+                            console.log("PayPal captured:", details.id);
+                            await handlePaymentSuccess("PayPal");
+                          }}
+                          onError={() => setError("PayPal payment failed. Please try again.")}
+                          onCancel={() => setError("PayPal payment was cancelled.")}
+                        />
+                      )}
                     </div>
                   )}
 
-                  {/* ── Card tab (Stripe) ── */}
+                  {/* ── Card tab ── */}
                   {activeTab === "Card" && (
                     <div style={styles.tabContent}>
-                      <p style={{ color: "#666", fontSize: "0.88rem", marginBottom: 16, fontFamily: "sans-serif" }}>
-                        You will be redirected to our secure Stripe checkout to enter your card details.
-                      </p>
-                      <button style={styles.payCard} onClick={handleCardPay} disabled={cardLoading}>
-                        {cardLoading ? "Redirecting..." : "💳  Pay with Card"}
-                      </button>
+                      {testMode ? (
+                        <button style={styles.payCard} disabled={cardLoading} onClick={() => handleTestPay("Card")}>
+                          {cardLoading ? "Submitting..." : "🧪 Simulate Card Pay"}
+                        </button>
+                      ) : (
+                        <>
+                          <p style={{ color: "#666", fontSize: "0.88rem", marginBottom: 16, fontFamily: "sans-serif" }}>
+                            You will be redirected to our secure Stripe checkout to enter your card details.
+                          </p>
+                          <button style={styles.payCard} onClick={handleCardPay} disabled={cardLoading}>
+                            {cardLoading ? "Redirecting..." : "💳  Pay with Card"}
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
 
@@ -482,28 +543,21 @@ const styles = {
   checkoutBtn: { width: "100%", marginBottom: 12, minWidth: "unset" },
   clearBtn: { width: "100%", background: "#fffaf6", color: "#2c2c2c", border: "1px solid #ddd3ca", borderRadius: 16, padding: 14, fontSize: "0.95rem", fontWeight: 600, fontFamily: "'Georgia', serif", cursor: "pointer", marginBottom: 16 },
   secureNote: { textAlign: "center", fontSize: "0.78rem", color: "#aaa", fontFamily: "sans-serif" },
-
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 },
   modal: { background: "#fff", borderRadius: 20, padding: 32, width: "100%", maxWidth: 440, boxShadow: "0 20px 60px rgba(0,0,0,0.2)", maxHeight: "90vh", overflowY: "auto" },
   modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 },
   modalTitle: { fontSize: "1.3rem", fontWeight: 600, color: "#1a1a1a", margin: 0 },
   modalClose: { background: "none", border: "none", fontSize: "1.1rem", cursor: "pointer", color: "#888", padding: "4px 8px", borderRadius: 6 },
-
   amountBox: { background: "#f0f5f8", borderRadius: 12, padding: 20, textAlign: "center", marginBottom: 24 },
   amountLabel: { fontSize: "0.88rem", color: "#888", margin: "0 0 6px", fontFamily: "sans-serif" },
   amountValue: { fontSize: "2rem", fontWeight: 700, color: "#1a1a1a", margin: 0 },
-
-  /* Tabs */
   tabs: { display: "flex", gap: 6, marginBottom: 20, background: "#f5f0eb", borderRadius: 12, padding: 4 },
   tab: { flex: 1, padding: "9px 0", border: "none", borderRadius: 9, background: "transparent", fontSize: "0.88rem", fontWeight: 500, color: "#666", cursor: "pointer", fontFamily: "'Georgia', serif", transition: "all 0.2s" },
   tabActive: { background: "#fff", color: "#1a1a1a", fontWeight: 700, boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
   tabContent: { marginBottom: 16 },
-
   errorBox: { background: "#fef2f2", color: "#c0533a", border: "1px solid #fca5a5", borderRadius: 8, padding: "10px 14px", fontSize: "0.88rem", fontFamily: "sans-serif", marginBottom: 14 },
   walletUnavailable: { color: "#666", fontSize: "0.88rem", fontFamily: "sans-serif", textAlign: "center", padding: "20px 0" },
-
   payCard: { width: "100%", background: "#3a7a8c", color: "#fff", border: "none", borderRadius: 12, padding: 16, fontSize: "1rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontFamily: "sans-serif" },
-
   modalSecure: { textAlign: "center", fontSize: "0.8rem", color: "#999", fontFamily: "sans-serif", paddingTop: 16, borderTop: "1px solid #eee", marginTop: 8 },
   successBox: { textAlign: "center", padding: "20px 0" },
   successIcon: { width: 64, height: 64, background: "#3a7a8c", color: "#fff", borderRadius: "50%", fontSize: "2rem", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
