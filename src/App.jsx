@@ -18,6 +18,7 @@ import ResetPassword from "./ResetPassword";
 import MyBookings from "./MyBookings";
 import MyHistory from "./MyHistory";
 import AdminBookings from "./AdminBookings";
+import AdminUsers from "./AdminUsers";
 
 function App() {
   const [cart, setCart] = useState([]);
@@ -50,6 +51,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} 
         />
+        <Route path="/admin/users" element={<AdminUsers />} />
       </Routes>
     </Router>
   );

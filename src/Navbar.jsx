@@ -83,29 +83,37 @@ export default function Navbar({ cartCount = 0, profilePath = "/profile" }) {
             </button>
 
             {menuOpen && (
-              <div style={dropdownStyles.menu}>
-                {isAdmin && (
-                  <button
-                    style={dropdownStyles.item}
-                    onClick={() => handleMenuClick("/admin/bookings")}
-                  >
-                    🛠️ Manage Bookings
-                  </button>
-                )}
-                <button
-                  style={dropdownStyles.item}
-                  onClick={() => handleMenuClick("/my-bookings")}
-                >
-                  📋 My Bookings
-                </button>
-                <button
-                  style={dropdownStyles.item}
-                  onClick={() => handleMenuClick("/my-history")}
-                >
-                  🕘 My History
-                </button>
-              </div>
-            )}
+  <div style={dropdownStyles.menu}>
+    {isAdmin && (
+      <button
+        style={dropdownStyles.item}
+        onClick={() => handleMenuClick("/admin/bookings")}
+      >
+        🛠️ Manage Bookings
+      </button>
+    )}
+    {isAdmin && (
+      <button
+        style={dropdownStyles.item}
+        onClick={() => handleMenuClick("/admin/users")}
+      >
+        👥 Manage Users
+      </button>
+    )}
+    <button
+      style={dropdownStyles.item}
+      onClick={() => handleMenuClick("/my-bookings")}
+    >
+      📋 My Bookings
+    </button>
+    <button
+      style={dropdownStyles.item}
+      onClick={() => handleMenuClick("/my-history")}
+    >
+      🕘 My History
+    </button>
+  </div>
+)}
           </div>
 
           <button
