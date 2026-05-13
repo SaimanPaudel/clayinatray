@@ -81,25 +81,26 @@ export default function PropertyDetail({ cart, setCart }) {
 
   const [bookedRanges, setBookedRanges] = useState([]);
 
-useEffect(() => {
-  fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
-    .then(res => res.json())
-    .then(data => setBookedRanges(data.bookedRanges || []))
-    .catch(() => {}); // silent fail is fine
-}, [slug]);
+  useEffect(() => {
+    fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
+      .then(res => res.json())
+      .then(data => setBookedRanges(data.bookedRanges || []))
+      .catch(() => {}); // silent fail is fine
+  }, [slug]);
 
-// Helper: returns true if a date falls inside any booked range
-const isDateBooked = (dateStr) => {
-  const date = new Date(dateStr);
-  return bookedRanges.some(range => {
-    const start = new Date(range.checkIn);
-    const end = new Date(range.checkOut);
-    return date >= start && date < end;
-  });
-};
+  // Helper: returns true if a date falls inside any booked range
+  const isDateBooked = (dateStr) => {
+    const date = new Date(dateStr);
+    return bookedRanges.some(range => {
+      const start = new Date(range.checkIn);
+      const end = new Date(range.checkOut);
+      return date >= start && date < end;
+    });
+  };
 
-// Helper: today's date as YYYY-MM-DD (can't book in the past)
-const today = new Date().toISOString().split('T')[0];
+  // Helper: today's date as YYYY-MM-DD (can't book in the past)
+  const today = new Date().toISOString().split('T')[0];
+
   if (!property) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
@@ -108,44 +109,54 @@ const today = new Date().toISOString().split('T')[0];
     );
   }
 
-  // ✅ FIXED: handleReserve is now a proper standalone function (was broken before)
+  // ✅ FIXED: handleReserve now sends the auth token so backend knows the user
   const handleReserve = async () => {
-  if (!checkIn || !checkOut) {
-    setBooking(b => ({ ...b, error: 'Please select check-in and check-out dates.' }));
-    return;
-  }
-
-  setBooking({ loading: true, success: false, error: '' });
-
-  try {
-    const res = await fetch(`${API_BASE}/bookings/direct`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        propertyId: slug,
-        name: property.title,
-        price: property.price,
-        checkIn,
-        checkOut,
-        guests,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      setBooking({ loading: false, success: true, error: '' });
-      // Refresh booked dates so calendar updates immediately
-      fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
-        .then(r => r.json())
-        .then(d => setBookedRanges(d.bookedRanges || []));
-    } else {
-      setBooking({ loading: false, success: false, error: data.error || 'Booking failed.' });
+    if (!checkIn || !checkOut) {
+      setBooking(b => ({ ...b, error: 'Please select check-in and check-out dates.' }));
+      return;
     }
-  } catch {
-    setBooking({ loading: false, success: false, error: 'Cannot connect to server. Is it running?' });
-  }
-};
+
+    // Get auth token (Yogesh's login saves this on successful login)
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setBooking({ loading: false, success: false, error: 'Please log in to make a reservation.' });
+      return;
+    }
+
+    setBooking({ loading: true, success: false, error: '' });
+
+    try {
+      const res = await fetch(`${API_BASE}/bookings/direct`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          propertyId: slug,
+          name: property.title,
+          price: property.price,
+          checkIn,
+          checkOut,
+          guests,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setBooking({ loading: false, success: true, error: '' });
+        // Refresh booked dates so calendar updates immediately
+        fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
+          .then(r => r.json())
+          .then(d => setBookedRanges(d.bookedRanges || []));
+      } else {
+        setBooking({ loading: false, success: false, error: data.error || 'Booking failed.' });
+      }
+    } catch {
+      setBooking({ loading: false, success: false, error: 'Cannot connect to server. Is it running?' });
+    }
+  };
 
   return (
     <div className="pd-page">
@@ -246,14 +257,12 @@ const today = new Date().toISOString().split('T')[0];
             </div>
 
             <BookingCalendar
-  bookedRanges={bookedRanges}
-  checkIn={checkIn}
-  checkOut={checkOut}
-  onCheckIn={setCheckIn}
-  onCheckOut={setCheckOut}
-/>
-  
-              
+              bookedRanges={bookedRanges}
+              checkIn={checkIn}
+              checkOut={checkOut}
+              onCheckIn={setCheckIn}
+              onCheckOut={setCheckOut}
+            />
 
             <div className="pd-guests-row">
               <div>
@@ -277,7 +286,6 @@ const today = new Date().toISOString().split('T')[0];
           </div>
         </div>
       </div>
-  </div>
-  
-              
-  )}
+    </div>
+  );
+}

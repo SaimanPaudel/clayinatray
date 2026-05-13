@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const bookingItemSchema = new mongoose.Schema(
@@ -32,13 +31,22 @@ const bookingSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["pending", "paid", "cancelled", "failed"],
+      enum: ["pending", "paid", "cancelled", "failed", "approved", "rejected"],
       default: "pending",
       index: true,
     },
 
     paymentMethod: { type: String },
     paymentId: { type: String },
+
+    // Admin approval fields
+    approvedAt: { type: Date },
+    approvedBy: { type: String },
+
+    // Admin rejection fields
+    rejectedAt: { type: Date },
+    rejectedBy: { type: String },
+    rejectionReason: { type: String },
   },
   { timestamps: true }
 );
