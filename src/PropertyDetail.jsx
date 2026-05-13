@@ -68,7 +68,7 @@ const properties = {
   },
 };
 
-// ✅ FIXED: Accepts cart and setCart, renders Navbar
+//  FIXED: Accepts cart and setCart, renders Navbar
 export default function PropertyDetail({ cart, setCart }) {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -117,10 +117,19 @@ const today = new Date().toISOString().split('T')[0];
 
   setBooking({ loading: true, success: false, error: '' });
 
+  const token = localStorage.getItem('token');
+  if (!token) {
+    setBooking({ loading: false, success: false, error: 'Please log in to make a booking.' });
+    return;
+  }
+
   try {
     const res = await fetch(`${API_BASE}/bookings/direct`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
       body: JSON.stringify({
         propertyId: slug,
         name: property.title,
