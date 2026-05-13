@@ -84,6 +84,13 @@ export default function Navbar({ cartCount = 0, profilePath = "/profile" }) {
 
             {menuOpen && (
   <div style={dropdownStyles.menu}>
+    
+    {isAdmin && (
+  <button style={dropdownStyles.item} onClick={() => handleMenuClick("/admin/messages")}>
+    📬 Messages
+  </button>
+)}
+
     {isAdmin && (
       <button
         style={dropdownStyles.item}
