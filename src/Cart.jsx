@@ -13,40 +13,69 @@ const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 const SERVICE_FEE_RATE = 0.14;
 
-const TABS = ["Wallet", "PayPal", "Card"];
+const TABS = ["Wallet", "PayPal"];
 
-// ── Save booking to DB ────────────────────────────────────────────────────────
-async function saveBookingToDB({ cart, quantities, subtotal, serviceFee, total, method }) {
+// ── Save booking OR order to DB ───────────────────────────────────────────────
+async function saveOrderToDB({ cart, quantities, subtotal, serviceFee, total, method }) {
+  const hasAccommodation = cart.some((item) => item.type === "accommodation");
   const token = localStorage.getItem("token");
-  if (!token) return null;
 
-  const res = await fetch(`${BACKEND_URL}/api/bookings`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      items: cart.map((item, i) => ({
-        name: item.name,
-        price: item.price,
-        quantity: quantities[i] || 1,
-        image: item.image,
-        propertyId: item.propertyId || item.name,
-      })),
-      subtotal,
-      serviceFee,
-      totalPrice: total,
-      paymentMethod: method,
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || "Failed to save booking");
+  if (hasAccommodation) {
+    // Accommodation booking flow
+    if (!token) return null;
+    const res = await fetch(`${BACKEND_URL}/api/bookings`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        items: cart.map((item, i) => ({
+          name: item.name,
+          price: item.price,
+          quantity: quantities[i] || 1,
+          image: item.image,
+          propertyId: item.propertyId || item.name,
+        })),
+        subtotal,
+        serviceFee,
+        totalPrice: total,
+        paymentMethod: method,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || "Failed to save booking");
+    }
+    return { type: "booking", data: await res.json() };
+  } else {
+    // Product purchase flow
+    const res = await fetch(`${BACKEND_URL}/api/orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        items: cart.map((item, i) => ({
+          name: item.name,
+          price: item.price,
+          quantity: quantities[i] || 1,
+          image: item.image,
+        })),
+        subtotal,
+        serviceFee,
+        amount: total,        // ← matches Order model field name
+        paymentMethod: method,
+        status: "paid",
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || "Failed to save order");
+    }
+    return { type: "order", data: await res.json() };
   }
-
-  return res.json();
 }
 
 // ── PayPal button wrapper ─────────────────────────────────────────────────────
@@ -101,6 +130,7 @@ export default function Cart({ cart, setCart }) {
   const [showCheckout, setShowCheckout] = useState(false);
   const [paymentDone, setPaymentDone] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState(null);
+  const [orderType, setOrderType] = useState(null);
   const [activeTab, setActiveTab] = useState("Wallet");
 
   // ── Test mode ──────────────────────────────────────────────────────────────
@@ -111,7 +141,7 @@ export default function Cart({ cart, setCart }) {
   const [walletAvailable, setWalletAvailable] = useState(false);
   const prButtonRef = useRef(null);
 
-  // Stripe card state
+  // Loading / error state
   const [cardLoading, setCardLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -122,11 +152,12 @@ export default function Cart({ cart, setCart }) {
   // ── Handle success for any payment method ─────────────────────────────────
   const handlePaymentSuccess = async (method) => {
     try {
-      await saveBookingToDB({ cart, quantities, subtotal, serviceFee, total, method });
+      const result = await saveOrderToDB({ cart, quantities, subtotal, serviceFee, total, method });
+      setOrderType(result?.type || "order");
       setPaymentMethod(method);
       setPaymentDone(true);
     } catch (err) {
-      setError("Payment succeeded but booking could not be saved. Please contact support.");
+      setError("Payment succeeded but order could not be saved. Please contact support.");
       console.error(err);
     }
   };
@@ -193,11 +224,21 @@ export default function Cart({ cart, setCart }) {
                 { handleActions: false }
               );
 
-              if (confirmError) { ev.complete("fail"); setError(confirmError.message); setCardLoading(false); return; }
+              if (confirmError) {
+                ev.complete("fail");
+                setError(confirmError.message);
+                setCardLoading(false);
+                return;
+              }
 
               if (paymentIntent.status === "requires_action") {
                 const { error: actionError } = await stripe2.confirmCardPayment(data.clientSecret);
-                if (actionError) { ev.complete("fail"); setError(actionError.message); setCardLoading(false); return; }
+                if (actionError) {
+                  ev.complete("fail");
+                  setError(actionError.message);
+                  setCardLoading(false);
+                  return;
+                }
               }
 
               ev.complete("success");
@@ -241,34 +282,6 @@ export default function Cart({ cart, setCart }) {
     })();
   }, [paymentRequest]);
 
-  // ── Stripe card pay ───────────────────────────────────────────────────────
-  const handleCardPay = async () => {
-    setCardLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/payment/create-payment-intent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: total * 100, currency: "aud" }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create payment intent");
-
-      // Save booking before redirect (card redirects away from the page)
-      await handlePaymentSuccess("Card");
-
-      const stripe = await stripePromise;
-      const { error: confirmError } = await stripe.confirmPayment({
-        clientSecret: data.clientSecret,
-        confirmParams: { return_url: window.location.origin + "/success" },
-      });
-      if (confirmError) setError(confirmError.message);
-    } catch (err) {
-      setError(err.message || "Payment failed. Please try again.");
-    }
-    setCardLoading(false);
-  };
-
   // ── Cart helpers ──────────────────────────────────────────────────────────
   const updateQty = (index, delta) =>
     setQuantities((p) => ({ ...p, [index]: Math.max(1, (p[index] || 1) + delta) }));
@@ -293,6 +306,7 @@ export default function Cart({ cart, setCart }) {
     setError(null);
     setActiveTab("Wallet");
     setTestMode(false);
+    setOrderType(null);
   };
 
   return (
@@ -318,7 +332,9 @@ export default function Cart({ cart, setCart }) {
                     <div style={styles.cardTop}>
                       <div>
                         <h3 style={styles.cardName}>{item.name}</h3>
-                        <span style={styles.cardTag}>Product</span>
+                        <span style={styles.cardTag}>
+                          {item.type === "accommodation" ? "Accommodation" : "Product"}
+                        </span>
                       </div>
                       <button style={styles.removeBtn} onClick={() => removeItem(index)} title="Remove">🗑</button>
                     </div>
@@ -371,21 +387,34 @@ export default function Cart({ cart, setCart }) {
                 /* ── Success screen ── */
                 <div style={styles.successBox}>
                   <div style={styles.successIcon}>✓</div>
-                  <h3 style={{ margin: "0 0 8px", color: "#1a1a1a" }}>Booking Submitted!</h3>
+                  <h3 style={{ margin: "0 0 8px", color: "#1a1a1a" }}>
+                    {orderType === "booking" ? "Booking Submitted!" : "Order Placed!"}
+                  </h3>
                   <p style={{ color: "#666", fontSize: "0.9rem", marginBottom: 6 }}>
-                    Your booking via <strong>{paymentMethod}</strong> is pending admin approval.
+                    {orderType === "booking"
+                      ? <><strong>{paymentMethod}</strong> — your booking is pending admin approval.</>
+                      : <><strong>{paymentMethod}</strong> — your order has been received.</>}
                   </p>
                   <p style={{ color: "#c0533a", fontWeight: 700, fontSize: "1.2rem", marginBottom: 8 }}>
                     ${total.toLocaleString()}.00
                   </p>
-                  <p style={{ color: "#888", fontSize: "0.82rem", marginBottom: 24, fontFamily: "sans-serif" }}>
-                    You can track or cancel your booking under <strong>My Bookings</strong>.
-                  </p>
-                  <div style={{ display: "flex", gap: 10 }}>
-                    <button className="btn-primary" style={{ flex: 1 }}
-                      onClick={() => { closeModal(); clearCart(); navigate("/my-bookings"); }}>
-                      My Bookings
-                    </button>
+                  {orderType === "booking" && (
+                    <p style={{ color: "#888", fontSize: "0.82rem", marginBottom: 24, fontFamily: "sans-serif" }}>
+                      You can track or cancel your booking under <strong>My Bookings</strong>.
+                    </p>
+                  )}
+                  <div style={{ display: "flex", gap: 10, marginTop: orderType !== "booking" ? 24 : 0 }}>
+                    {orderType === "booking" ? (
+                      <button className="btn-primary" style={{ flex: 1 }}
+                        onClick={() => { closeModal(); clearCart(); navigate("/my-bookings"); }}>
+                        My Bookings
+                      </button>
+                    ) : (
+                      <button className="btn-primary" style={{ flex: 1 }}
+                        onClick={() => { closeModal(); clearCart(); navigate("/"); }}>
+                        Continue Shopping
+                      </button>
+                    )}
                     <button className="btn-secondary" style={{ flex: 1 }}
                       onClick={() => { closeModal(); clearCart(); navigate("/"); }}>
                       Back to Home
@@ -412,7 +441,7 @@ export default function Cart({ cart, setCart }) {
                       🧪 {testMode ? "Test mode on — no real charge" : "Test mode off — real payment"}
                     </span>
                     <button
-                      onClick={() => setTestMode(t => !t)}
+                      onClick={() => setTestMode((t) => !t)}
                       style={{
                         background: testMode ? "#f0c000" : "#ddd",
                         border: "none", borderRadius: 20,
@@ -425,7 +454,7 @@ export default function Cart({ cart, setCart }) {
                     </button>
                   </div>
 
-                  {/* Tabs */}
+                  {/* Tabs — Wallet & PayPal only */}
                   <div style={styles.tabs}>
                     {TABS.map((tab) => (
                       <button
@@ -444,7 +473,7 @@ export default function Cart({ cart, setCart }) {
                   {activeTab === "Wallet" && (
                     <div style={styles.tabContent}>
                       {testMode ? (
-                        <button style={styles.payCard} disabled={cardLoading} onClick={() => handleTestPay("Wallet")}>
+                        <button style={styles.payBtn} disabled={cardLoading} onClick={() => handleTestPay("Wallet")}>
                           {cardLoading ? "Submitting..." : "🧪 Simulate Wallet Pay"}
                         </button>
                       ) : walletAvailable ? (
@@ -452,7 +481,7 @@ export default function Cart({ cart, setCart }) {
                       ) : (
                         <p style={styles.walletUnavailable}>
                           Apple Pay / Google Pay is not available on this device or browser.
-                          Please use PayPal or Card instead.
+                          Please use PayPal instead.
                         </p>
                       )}
                     </div>
@@ -462,7 +491,11 @@ export default function Cart({ cart, setCart }) {
                   {activeTab === "PayPal" && (
                     <div style={styles.tabContent}>
                       {testMode ? (
-                        <button style={{ ...styles.payCard, background: "#0070ba" }} disabled={cardLoading} onClick={() => handleTestPay("PayPal")}>
+                        <button
+                          style={{ ...styles.payBtn, background: "#0070ba" }}
+                          disabled={cardLoading}
+                          onClick={() => handleTestPay("PayPal")}
+                        >
                           {cardLoading ? "Submitting..." : "🧪 Simulate PayPal Pay"}
                         </button>
                       ) : (
@@ -475,26 +508,6 @@ export default function Cart({ cart, setCart }) {
                           onError={() => setError("PayPal payment failed. Please try again.")}
                           onCancel={() => setError("PayPal payment was cancelled.")}
                         />
-                      )}
-                    </div>
-                  )}
-
-                  {/* ── Card tab ── */}
-                  {activeTab === "Card" && (
-                    <div style={styles.tabContent}>
-                      {testMode ? (
-                        <button style={styles.payCard} disabled={cardLoading} onClick={() => handleTestPay("Card")}>
-                          {cardLoading ? "Submitting..." : "🧪 Simulate Card Pay"}
-                        </button>
-                      ) : (
-                        <>
-                          <p style={{ color: "#666", fontSize: "0.88rem", marginBottom: 16, fontFamily: "sans-serif" }}>
-                            You will be redirected to our secure Stripe checkout to enter your card details.
-                          </p>
-                          <button style={styles.payCard} onClick={handleCardPay} disabled={cardLoading}>
-                            {cardLoading ? "Redirecting..." : "💳  Pay with Card"}
-                          </button>
-                        </>
                       )}
                     </div>
                   )}
@@ -557,7 +570,7 @@ const styles = {
   tabContent: { marginBottom: 16 },
   errorBox: { background: "#fef2f2", color: "#c0533a", border: "1px solid #fca5a5", borderRadius: 8, padding: "10px 14px", fontSize: "0.88rem", fontFamily: "sans-serif", marginBottom: 14 },
   walletUnavailable: { color: "#666", fontSize: "0.88rem", fontFamily: "sans-serif", textAlign: "center", padding: "20px 0" },
-  payCard: { width: "100%", background: "#3a7a8c", color: "#fff", border: "none", borderRadius: 12, padding: 16, fontSize: "1rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontFamily: "sans-serif" },
+  payBtn: { width: "100%", background: "#3a7a8c", color: "#fff", border: "none", borderRadius: 12, padding: 16, fontSize: "1rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontFamily: "sans-serif" },
   modalSecure: { textAlign: "center", fontSize: "0.8rem", color: "#999", fontFamily: "sans-serif", paddingTop: 16, borderTop: "1px solid #eee", marginTop: 8 },
   successBox: { textAlign: "center", padding: "20px 0" },
   successIcon: { width: 64, height: 64, background: "#3a7a8c", color: "#fff", borderRadius: "50%", fontSize: "2rem", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" },
