@@ -18,6 +18,7 @@ const orderSchema = new mongoose.Schema(
         "cash",
         "other",
         "wallet",
+        "Wallet",
         "apple-pay",
         "google-pay",
         "Wallet (Test)",
