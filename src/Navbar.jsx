@@ -15,12 +15,13 @@ export default function Navbar({ cartCount = 0, profilePath = "/profile" }) {
   const isLoggedIn = Boolean(
     localStorage.getItem("loggedInUser") || localStorage.getItem("user")
   );
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const isAdmin = user?.role === "admin";
   const resolvedProfilePath = isLoggedIn ? "/profile" : profilePath;
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -71,7 +72,6 @@ export default function Navbar({ cartCount = 0, profilePath = "/profile" }) {
             🛒 <span>({cartCount})</span>
           </button>
 
-          {/* ☰ Menu with dropdown */}
           <div ref={menuRef} style={{ position: "relative" }}>
             <button
               type="button"
@@ -84,6 +84,14 @@ export default function Navbar({ cartCount = 0, profilePath = "/profile" }) {
 
             {menuOpen && (
               <div style={dropdownStyles.menu}>
+                {isAdmin && (
+                  <button
+                    style={dropdownStyles.item}
+                    onClick={() => handleMenuClick("/admin/bookings")}
+                  >
+                    🛠️ Manage Bookings
+                  </button>
+                )}
                 <button
                   style={dropdownStyles.item}
                   onClick={() => handleMenuClick("/my-bookings")}
