@@ -68,7 +68,6 @@ const properties = {
   },
 };
 
-//  FIXED: Accepts cart and setCart, renders Navbar
 export default function PropertyDetail({ cart, setCart }) {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -81,25 +80,24 @@ export default function PropertyDetail({ cart, setCart }) {
 
   const [bookedRanges, setBookedRanges] = useState([]);
 
-useEffect(() => {
-  fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
-    .then(res => res.json())
-    .then(data => setBookedRanges(data.bookedRanges || []))
-    .catch(() => {}); // silent fail is fine
-}, [slug]);
+  useEffect(() => {
+    fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
+      .then(res => res.json())
+      .then(data => setBookedRanges(data.bookedRanges || []))
+      .catch(() => {});
+  }, [slug]);
 
-// Helper: returns true if a date falls inside any booked range
-const isDateBooked = (dateStr) => {
-  const date = new Date(dateStr);
-  return bookedRanges.some(range => {
-    const start = new Date(range.checkIn);
-    const end = new Date(range.checkOut);
-    return date >= start && date < end;
-  });
-};
+  const isDateBooked = (dateStr) => {
+    const date = new Date(dateStr);
+    return bookedRanges.some(range => {
+      const start = new Date(range.checkIn);
+      const end = new Date(range.checkOut);
+      return date >= start && date < end;
+    });
+  };
 
-// Helper: today's date as YYYY-MM-DD (can't book in the past)
-const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+
   if (!property) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
@@ -108,60 +106,56 @@ const today = new Date().toISOString().split('T')[0];
     );
   }
 
-  // ✅ FIXED: handleReserve is now a proper standalone function (was broken before)
   const handleReserve = async () => {
-  if (!checkIn || !checkOut) {
-    setBooking(b => ({ ...b, error: 'Please select check-in and check-out dates.' }));
-    return;
-  }
-
-  setBooking({ loading: true, success: false, error: '' });
-
-  const token = localStorage.getItem('token');
-  if (!token) {
-    setBooking({ loading: false, success: false, error: 'Please log in to make a booking.' });
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/bookings/direct`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        propertyId: slug,
-        name: property.title,
-        price: property.price,
-        checkIn,
-        checkOut,
-        guests,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      setBooking({ loading: false, success: true, error: '' });
-      // Refresh booked dates so calendar updates immediately
-      fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
-        .then(r => r.json())
-        .then(d => setBookedRanges(d.bookedRanges || []));
-    } else {
-      setBooking({ loading: false, success: false, error: data.error || 'Booking failed.' });
+    if (!checkIn || !checkOut) {
+      setBooking(b => ({ ...b, error: 'Please select check-in and check-out dates.' }));
+      return;
     }
-  } catch {
-    setBooking({ loading: false, success: false, error: 'Cannot connect to server. Is it running?' });
-  }
-};
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setBooking({ loading: false, success: false, error: 'Please log in to make a booking.' });
+      return;
+    }
+
+    setBooking({ loading: true, success: false, error: '' });
+
+    try {
+      const res = await fetch(`${API_BASE}/bookings/direct`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          propertyId: slug,
+          name: property.title,
+          price: property.price,
+          checkIn,
+          checkOut,
+          guests,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setBooking({ loading: false, success: true, error: '' });
+        fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
+          .then(r => r.json())
+          .then(d => setBookedRanges(d.bookedRanges || []));
+      } else {
+        setBooking({ loading: false, success: false, error: data.error || 'Booking failed.' });
+      }
+    } catch {
+      setBooking({ loading: false, success: false, error: 'Cannot connect to server. Is it running?' });
+    }
+  };
 
   return (
     <div className="pd-page">
-      {/* ✅ FIXED: Navbar renders with cart count */}
       <Navbar cartCount={cart ? cart.length : 0} />
 
-      {/* Search bar */}
       <div className="accom-search-bar" style={{ maxWidth: 500, margin: '16px auto' }}>
         <span>🔍</span>
         <input type="text" placeholder="Search South Golden Beach" />
@@ -178,7 +172,6 @@ const today = new Date().toISOString().split('T')[0];
           <span className="pd-save">♡ Save</span>
         </div>
 
-        {/* Photo grid */}
         <div className="pd-gallery">
           <div className="pd-gallery-main">
             <img src={property.images[0]} alt="main" />
@@ -193,7 +186,6 @@ const today = new Date().toISOString().split('T')[0];
         </div>
 
         <div className="pd-content">
-          {/* Left: details */}
           <div className="pd-left">
             <div className="pd-host-row">
               <div>
@@ -217,16 +209,17 @@ const today = new Date().toISOString().split('T')[0];
               ))}
             </div>
 
-            {/* Calendar */}
             <div className="pd-calendar-section">
               <h3>📅 Calendar availability</h3>
               <p className="pd-calendar-note">
                 This calendar is automatically synced with our Airbnb listing to prevent double bookings.{' '}
+
                 
-              </p>
+
+               
+            </p>
             </div>
 
-            {/* Reviews */}
             <div className="pd-reviews-section">
               <h3>⭐ {property.rating} · {property.reviewCount} guest reviews</h3>
               <div className="pd-reviews-grid">
@@ -247,7 +240,6 @@ const today = new Date().toISOString().split('T')[0];
             </div>
           </div>
 
-          {/* Right: booking widget */}
           <div className="pd-booking-widget">
             <div className="pd-booking-price">
               <span className="pd-booking-amount">${property.price}</span>
@@ -255,14 +247,12 @@ const today = new Date().toISOString().split('T')[0];
             </div>
 
             <BookingCalendar
-  bookedRanges={bookedRanges}
-  checkIn={checkIn}
-  checkOut={checkOut}
-  onCheckIn={setCheckIn}
-  onCheckOut={setCheckOut}
-/>
-  
-              
+              bookedRanges={bookedRanges}
+              checkIn={checkIn}
+              checkOut={checkOut}
+              onCheckIn={setCheckIn}
+              onCheckOut={setCheckOut}
+            />
 
             <div className="pd-guests-row">
               <div>
@@ -278,7 +268,6 @@ const today = new Date().toISOString().split('T')[0];
             {booking.error && <p className="pd-error">{booking.error}</p>}
             {booking.success && <p className="pd-success">🎉 Booking confirmed!</p>}
 
-            {/* ✅ FIXED: Single clean Reserve button — removed the broken duplicate Stripe button */}
             <button className="pd-reserve-btn" onClick={handleReserve} disabled={booking.loading}>
               {booking.loading ? 'Reserving...' : 'Reserve'}
             </button>
@@ -286,7 +275,6 @@ const today = new Date().toISOString().split('T')[0];
           </div>
         </div>
       </div>
-  </div>
-  
-              
-  )}
+    </div>
+  );
+}

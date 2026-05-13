@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
   {
-    // Product details (your version)
     productId: {
       type: Number,
       default: null,
@@ -11,25 +10,35 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
-    // Payment details (friend's version)
     paymentMethod: {
       type: String,
-      enum: ["stripe", "paypal", "cash", "other"],
+      enum: [
+        "stripe",
+        "paypal",
+        "cash",
+        "other",
+        "wallet",
+        "apple-pay",
+        "google-pay",
+        "Wallet (Test)",
+        "PayPal (Test)",
+        "Card (Test)",
+        "Apple Pay",
+        "Google Pay",
+        "PayPal",
+        "Card",
+      ],
       default: "other",
     },
     paymentId: {
       type: String,
-      unique: true,
-      sparse: true, // allows multiple docs without paymentId
       default: null,
+      // removed unique/sparse — caused duplicate key errors for null test orders
     },
     payerEmail: {
       type: String,
       default: "",
     },
-
-    // Shared fields (merged)
     amount: {
       type: Number,
       default: null,
@@ -47,15 +56,23 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
     },
-userId: { type: String, index: true },
-    // Items array (friend's version)
+    userId: { type: String, index: true },
     items: [
       {
         name: String,
         price: Number,
         quantity: Number,
+        image: String,
       },
     ],
+    subtotal: {
+      type: Number,
+      default: null,
+    },
+    serviceFee: {
+      type: Number,
+      default: null,
+    },
   },
   { timestamps: true }
 );
