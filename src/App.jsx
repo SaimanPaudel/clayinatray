@@ -17,6 +17,9 @@ import PropertyDetail from "./PropertyDetail";
 import ResetPassword from "./ResetPassword";
 import MyBookings from "./MyBookings";
 import MyHistory from "./MyHistory";
+import AdminBookings from "./AdminBookings";
+import AdminUsers from "./AdminUsers";
+import AdminMessages from "./AdminMessages";
 
 function App() {
   const [cart, setCart] = useState([]);
@@ -44,11 +47,14 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/my-history" element={<MyHistory />} />
-
+        <Route path="/admin/bookings" element={<AdminBookings />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} 
         />
+        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/messages" element={<AdminMessages />} />
+        
       </Routes>
     </Router>
   );

@@ -68,7 +68,6 @@ const properties = {
   },
 };
 
-// ✅ FIXED: Accepts cart and setCart, renders Navbar
 export default function PropertyDetail({ cart, setCart }) {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -85,10 +84,9 @@ export default function PropertyDetail({ cart, setCart }) {
     fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
       .then(res => res.json())
       .then(data => setBookedRanges(data.bookedRanges || []))
-      .catch(() => {}); // silent fail is fine
+      .catch(() => {});
   }, [slug]);
 
-  // Helper: returns true if a date falls inside any booked range
   const isDateBooked = (dateStr) => {
     const date = new Date(dateStr);
     return bookedRanges.some(range => {
@@ -98,7 +96,6 @@ export default function PropertyDetail({ cart, setCart }) {
     });
   };
 
-  // Helper: today's date as YYYY-MM-DD (can't book in the past)
   const today = new Date().toISOString().split('T')[0];
 
   if (!property) {
@@ -109,17 +106,15 @@ export default function PropertyDetail({ cart, setCart }) {
     );
   }
 
-  // ✅ FIXED: handleReserve now sends the auth token so backend knows the user
   const handleReserve = async () => {
     if (!checkIn || !checkOut) {
       setBooking(b => ({ ...b, error: 'Please select check-in and check-out dates.' }));
       return;
     }
 
-    // Get auth token (Yogesh's login saves this on successful login)
     const token = localStorage.getItem('token');
     if (!token) {
-      setBooking({ loading: false, success: false, error: 'Please log in to make a reservation.' });
+      setBooking({ loading: false, success: false, error: 'Please log in to make a booking.' });
       return;
     }
 
@@ -146,7 +141,6 @@ export default function PropertyDetail({ cart, setCart }) {
 
       if (res.ok) {
         setBooking({ loading: false, success: true, error: '' });
-        // Refresh booked dates so calendar updates immediately
         fetch(`${API_BASE}/bookings/booked-dates/${slug}`)
           .then(r => r.json())
           .then(d => setBookedRanges(d.bookedRanges || []));
@@ -160,10 +154,8 @@ export default function PropertyDetail({ cart, setCart }) {
 
   return (
     <div className="pd-page">
-      {/* ✅ FIXED: Navbar renders with cart count */}
       <Navbar cartCount={cart ? cart.length : 0} />
 
-      {/* Search bar */}
       <div className="accom-search-bar" style={{ maxWidth: 500, margin: '16px auto' }}>
         <span>🔍</span>
         <input type="text" placeholder="Search South Golden Beach" />
@@ -180,7 +172,6 @@ export default function PropertyDetail({ cart, setCart }) {
           <span className="pd-save">♡ Save</span>
         </div>
 
-        {/* Photo grid */}
         <div className="pd-gallery">
           <div className="pd-gallery-main">
             <img src={property.images[0]} alt="main" />
@@ -195,7 +186,6 @@ export default function PropertyDetail({ cart, setCart }) {
         </div>
 
         <div className="pd-content">
-          {/* Left: details */}
           <div className="pd-left">
             <div className="pd-host-row">
               <div>
@@ -219,16 +209,14 @@ export default function PropertyDetail({ cart, setCart }) {
               ))}
             </div>
 
-            {/* Calendar */}
             <div className="pd-calendar-section">
               <h3>📅 Calendar availability</h3>
               <p className="pd-calendar-note">
                 This calendar is automatically synced with our Airbnb listing to prevent double bookings.{' '}
-                <a href="https://www.airbnb.com.au/rooms/623421073708454500?_set_bev_on_new_domain=1768307146_EAY2RhOTE2Y2IzOT&set_everest_cookie_on_new_domain=1768307146.EAM2RkMTU2ZTllNjhmM2.xc53efQWO2H4AdqDIYHtsu3aKfc2ioZ62008JFaDTeM&source_impression_id=p3_1768894558_P3xwfWqYWa2qliM6" target="_blank" rel="noreferrer">View the listing on Airbnb</a>
+                <a href="https://www.airbnb.com.au/rooms/623421073708454500" target="_blank" rel="noreferrer">View the listing on Airbnb</a>
               </p>
             </div>
 
-            {/* Reviews */}
             <div className="pd-reviews-section">
               <h3>⭐ {property.rating} · {property.reviewCount} guest reviews</h3>
               <div className="pd-reviews-grid">
@@ -249,7 +237,6 @@ export default function PropertyDetail({ cart, setCart }) {
             </div>
           </div>
 
-          {/* Right: booking widget */}
           <div className="pd-booking-widget">
             <div className="pd-booking-price">
               <span className="pd-booking-amount">${property.price}</span>
@@ -278,7 +265,6 @@ export default function PropertyDetail({ cart, setCart }) {
             {booking.error && <p className="pd-error">{booking.error}</p>}
             {booking.success && <p className="pd-success">🎉 Booking confirmed!</p>}
 
-            {/* ✅ FIXED: Single clean Reserve button — removed the broken duplicate Stripe button */}
             <button className="pd-reserve-btn" onClick={handleReserve} disabled={booking.loading}>
               {booking.loading ? 'Reserving...' : 'Reserve'}
             </button>

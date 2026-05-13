@@ -14,11 +14,14 @@ app.use(
   })
 );
 
+
+
 // Stripe webhook raw body must come before express.json()
 app.use("/api/payment/webhook", express.raw({ type: "application/json" }));
 
 app.use(express.json());
 
+app.use("/api/messages", require("./routes/messageRoutes"));
 app.use("/api/payment", require("./routes/paymentRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
