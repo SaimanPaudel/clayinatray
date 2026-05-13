@@ -12,14 +12,6 @@ const {
 
 const router = express.Router();
 
-// Temporary — delete after use!
-router.get("/make-admin", async (req, res) => {
-  await User.updateOne(
-    { email: "yghimire02@gmail.com" },
-    { $set: { role: "admin" } }
-  );
-  res.json({ message: "Done" });
-});
 
 router.get("/profile", auth, getProfile);
 router.put("/profile", auth, updateProfile);
