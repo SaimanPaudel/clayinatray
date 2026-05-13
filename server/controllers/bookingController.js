@@ -12,9 +12,9 @@ exports.createDirectBooking = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Check for conflicts
+    // Check for conflicts (includes approved bookings)
     const conflict = await Booking.findOne({
-      status: { $in: ["pending", "paid"] },
+      status: { $in: ["pending", "paid", "approved"] },
       properties: {
         $elemMatch: {
           propertyId,
@@ -69,7 +69,7 @@ exports.getBookedDates = async (req, res) => {
 
     const bookings = await Booking.find({
       "properties.propertyId": propertySlug,
-      status: { $in: ["pending", "paid"] },
+      status: { $in: ["pending", "paid", "approved"] },
     });
 
     const bookedRanges = [];
@@ -158,8 +158,17 @@ exports.cancelBooking = async (req, res) => {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    if (booking.userId !== userId) {
+    // Fix: use .toString() for proper ownership check
+    if (booking.userId.toString() !== userId) {
       return res.status(403).json({ error: "Forbidden" });
+    }
+
+    // Status guard: only pending or approved bookings can be cancelled
+    const cancellableStatuses = ["pending", "approved"];
+    if (!cancellableStatuses.includes(booking.status)) {
+      return res.status(400).json({
+        error: `Cannot cancel a booking that is ${booking.status}`,
+      });
     }
 
     booking.status = "cancelled";
