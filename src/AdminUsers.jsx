@@ -22,7 +22,11 @@ export default function AdminUsers() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
-      .then((data) => { setUsers(data); setLoading(false); })
+      .then((data) => { 
+        console.log("API response:", data);
+        setUsers(data); 
+        setLoading(false); 
+      })
       .catch(() => { setError("Failed to load users"); setLoading(false); });
   }, []);
 

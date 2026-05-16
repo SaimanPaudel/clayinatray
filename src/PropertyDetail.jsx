@@ -213,8 +213,11 @@ export default function PropertyDetail({ cart, setCart }) {
               <h3>📅 Calendar availability</h3>
               <p className="pd-calendar-note">
                 This calendar is automatically synced with our Airbnb listing to prevent double bookings.{' '}
-                <a href="https://www.airbnb.com.au/rooms/623421073708454500" target="_blank" rel="noreferrer">View the listing on Airbnb</a>
-              </p>
+
+                
+
+               
+            </p>
             </div>
 
             <div className="pd-reviews-section">

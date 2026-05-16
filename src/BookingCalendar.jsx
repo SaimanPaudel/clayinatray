@@ -25,8 +25,11 @@ export default function BookingCalendar({ bookedRanges = [], checkIn, checkOut, 
   // ── helpers ──────────────────────────────────────────────────────────────
 
   const toStr = (d) => {
-    // Returns YYYY-MM-DD for a Date object
-    return d.toISOString().split('T')[0];
+    // Returns YYYY-MM-DD for a Date object using local time (not UTC)
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   };
 
   const fromStr = (s) => {
