@@ -9,6 +9,7 @@ import Navbar from "./Navbar";
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID;
 const BACKEND_URL = (import.meta.env.VITE_API_URL || "http://localhost:4000/api").replace(/\/api$/, "");
+
 const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 const SERVICE_FEE_RATE = 0.14;
 
