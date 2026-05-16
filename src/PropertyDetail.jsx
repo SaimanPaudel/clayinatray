@@ -4,7 +4,7 @@ import BookingCalendar from './BookingCalendar';
 import './PropertyDetail.css';
 import Navbar from './Navbar';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/api$/, '') + '/api';
 
 const properties = {
   'upstairs-retreat': {

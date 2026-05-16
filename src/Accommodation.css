@@ -46,10 +46,13 @@
 .accom-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  gap: 32px;
   max-width: 1000px;
+  width: 100%;
   margin: 30px auto;
   padding: 0 20px;
+  box-sizing: border-box;
+  align-items: stretch;
 }
 
 .accom-card {
@@ -59,6 +62,8 @@
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
 }
 .accom-card:hover {
   transform: translateY(-4px);
@@ -69,6 +74,7 @@
   position: relative;
   height: 280px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 .accom-card-img-wrap img {
   width: 100%;
@@ -114,29 +120,38 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-.accom-card-body { padding: 16px; }
+.accom-card-body {
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 .accom-card-location { font-size: 12px; color: #888; margin: 0 0 4px; }
 .accom-card-title { font-size: 16px; font-weight: 600; color: #2c2c2c; margin: 0 0 10px; }
 .accom-card-meta { display: flex; gap: 14px; font-size: 13px; color: #555; margin-bottom: 8px; }
-.accom-card-desc { font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 12px; }
+.accom-card-desc { font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 12px; flex: 1; }
+
 .accom-card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-top: 1px solid #f0f0f0;
   padding-top: 10px;
+  margin-top: auto;
 }
 .accom-price { font-size: 15px; color: #c0623a; }
 .accom-price strong { font-size: 17px; }
 .accom-footer-rating { font-size: 13px; color: #555; }
 
 .accom-why {
-  max-width: 900px;
-  margin: 40px auto;
-  padding: 30px;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto 40px;
+  padding: 50px 40px;
   background: #fff;
   border-radius: 14px;
   text-align: center;
+  box-sizing: border-box;
 }
 .accom-why h2 { font-size: 18px; color: #2d7d9a; margin-bottom: 24px; font-weight: 600; }
 .accom-why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -147,6 +162,7 @@
   .accom-grid { grid-template-columns: 1fr; }
   .accom-why-grid { grid-template-columns: 1fr; }
 }
+
 .stay-navbar {
   max-width: 1180px;
   margin: 0 auto;
@@ -392,7 +408,6 @@
     flex-direction: column;
     align-items: flex-start;
   }
-
   .stay-navbar__links {
     flex-wrap: wrap;
   }
@@ -406,7 +421,6 @@
     padding-left: 20px;
     padding-right: 20px;
   }
-
   .stay-card__footer {
     flex-direction: column;
     align-items: flex-start;

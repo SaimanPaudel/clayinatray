@@ -188,3 +188,48 @@ exports.cancelBooking = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// ─── ADMIN ROUTES ────────────────────────────────────────────────────────────
+
+// GET /api/bookings/admin/all
+exports.getAllBookingsAdmin = async (req, res) => {
+  try {
+    const bookings = await Booking.find().sort({ createdAt: -1 });
+    res.status(200).json(bookings);
+  } catch (err) {
+    console.error("getAllBookingsAdmin error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// PUT /api/bookings/admin/:id/approve
+exports.approveBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      { status: "approved" },
+      { new: true }
+    );
+    if (!booking) return res.status(404).json({ error: "Booking not found" });
+    res.status(200).json(booking);
+  } catch (err) {
+    console.error("approveBooking error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// PUT /api/bookings/admin/:id/reject
+exports.rejectBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      { status: "rejected", rejectionReason: req.body.reason || "" },
+      { new: true }
+    );
+    if (!booking) return res.status(404).json({ error: "Booking not found" });
+    res.status(200).json(booking);
+  } catch (err) {
+    console.error("rejectBooking error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};

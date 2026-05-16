@@ -35,7 +35,9 @@ app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/admin", adminRoutes);
 app.use("/api/bookings", require("./routes/bookingRoutes"));
 app.use("/api/messages", require("./routes/messageRoutes"));
- 
+app.use("/api/cart", require("./routes/cartRoutes"));
+app.use("/api/orders", require("./routes/orderRoutes"));
+app.use("/api/products", require("./routes/productRoutes"));
 app.get("/api/health", (req, res) => res.json({ status: "OK" }));
  
 app.use((req, res) => res.status(404).json({ message: "Route not found" }));
