@@ -1,11 +1,12 @@
 const express = require("express");
 const router = express.Router();
 
-const auth = require("../middleware/authMiddleware");
+const protect = require("../middleware/authMiddleware");
+const admin = require("../middleware/adminMiddleware");
 const {
-  createBooking,
   createDirectBooking,
   getBookedDates,
+  createBooking,
   getUserBookings,
   getBookingById,
   cancelBooking,
@@ -14,18 +15,16 @@ const {
   rejectBooking,
 } = require("../controllers/bookingController");
 
-router.post("/direct", createDirectBooking);
 router.get("/booked-dates/:propertySlug", getBookedDates);
-router.post("/", auth, createBooking);
-router.get("/user", auth, getUserBookings);
+router.post("/direct", protect, createDirectBooking);
+router.post("/", protect, createBooking);
+router.get("/user", protect, getUserBookings);
 
-// Admin routes — must be before /:id
-router.get("/admin/all", auth, getAllBookingsAdmin);
-router.put("/admin/:id/approve", auth, approveBooking);
-router.put("/admin/:id/reject", auth, rejectBooking);
+router.get("/admin/all", protect, admin, getAllBookingsAdmin);
+router.put("/admin/:id/approve", protect, admin, approveBooking);
+router.put("/admin/:id/reject", protect, admin, rejectBooking);
 
-// Keep /:id routes at the bottom
-router.get("/:id", auth, getBookingById);
-router.put("/:id/cancel", auth, cancelBooking);
+router.get("/:id", protect, getBookingById);
+router.put("/:id/cancel", protect, cancelBooking);
 
 module.exports = router;

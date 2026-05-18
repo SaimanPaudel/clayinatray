@@ -44,10 +44,13 @@ export default function AdminBookings() {
     const data = await res.json();
     if (res.ok) {
       setBookings((prev) =>
-        prev.map((b) => (b._id === id ? { ...b, status: "approved" } : b))
+        prev.map((b) => (b._id === id ? { ...b, ...data.booking } : b))
       );
+      if (!data.email?.sent) {
+        alert(`Booking approved, but email was not sent: ${data.email?.error || "unknown email error"}`);
+      }
     } else {
-      alert(data.message || "Failed to approve");
+      alert(data.error || data.message || "Failed to approve");
     }
   };
 
@@ -64,10 +67,13 @@ export default function AdminBookings() {
     const data = await res.json();
     if (res.ok) {
       setBookings((prev) =>
-        prev.map((b) => (b._id === id ? { ...b, status: "rejected" } : b))
+        prev.map((b) => (b._id === id ? { ...b, ...data.booking } : b))
       );
+      if (!data.email?.sent) {
+        alert(`Booking rejected, but email was not sent: ${data.email?.error || "unknown email error"}`);
+      }
     } else {
-      alert(data.message || "Failed to reject");
+      alert(data.error || data.message || "Failed to reject");
     }
   };
 
@@ -121,6 +127,9 @@ export default function AdminBookings() {
 
               <p style={{ margin: "4px 0", fontSize: 14, color: "#666" }}>
                 Booking ID: {b._id}
+              </p>
+              <p style={{ margin: "4px 0", fontSize: 14, color: "#666" }}>
+                Guest: {b.user?.name || "Unknown"} {b.user?.email ? `(${b.user.email})` : ""}
               </p>
               <p style={{ margin: "4px 0", fontSize: 14, color: "#666" }}>
                 User ID: {b.userId}

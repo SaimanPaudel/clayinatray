@@ -34,7 +34,6 @@ const properties = [
   },
 ];
 
-// ✅ FIXED: Now accepts cart and setCart props, and renders Navbar
 export default function Accommodation({ cart, setCart }) {
   const navigate = useNavigate();
   const [saved, setSaved] = useState({});
@@ -46,7 +45,7 @@ export default function Accommodation({ cart, setCart }) {
 
   return (
     <div className="accom-page">
-      {/* ✅ FIXED: Navbar now renders with cart count */}
+      
       <Navbar cartCount={cart ? cart.length : 0} />
 
       <div className="accom-search-bar">

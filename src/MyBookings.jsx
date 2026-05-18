@@ -99,7 +99,7 @@ export default function MyBookings() {
                 </div>
 
                 <div style={styles.cardBody}>
-                  {(booking.items || []).map((item, idx) => (
+                  {(booking.properties || []).map((item, idx) => (
                     <div key={idx} style={styles.propertyRow}>
                       {item.image && (
                         <img src={item.image} alt={item.name} style={styles.propImg} />
@@ -111,7 +111,7 @@ export default function MyBookings() {
                         </p>
                         {item.checkIn && (
                           <p style={styles.propMeta}>
-                            Check-in: {item.checkIn} → Check-out: {item.checkOut}
+                            Check-in: {new Date(item.checkIn).toLocaleDateString("en-AU")} → Check-out: {new Date(item.checkOut).toLocaleDateString("en-AU")}
                           </p>
                         )}
                       </div>
@@ -121,7 +121,11 @@ export default function MyBookings() {
 
                 <div style={styles.cardFooter}>
                   <div>
-                    <p style={styles.totalLabel}>Total paid via {booking.paymentMethod}</p>
+                    <p style={styles.totalLabel}>
+                      {booking.status === "pending"
+                        ? "Pending admin approval"
+                        : `Total via ${booking.paymentMethod || "booking request"}`}
+                    </p>
                     <p style={styles.totalValue}>${booking.totalPrice?.toLocaleString()}.00</p>
                   </div>
                   <button style={styles.cancelBtn} onClick={() => handleCancel(booking._id)}>
